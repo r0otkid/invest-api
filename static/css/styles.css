@@ -1,0 +1,119 @@
+.toolbox {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 3px;
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    color: #fff;
+    padding: 5px;
+    padding-left: 15px;
+}
+
+.btn {
+    background-color: #4CAF50;
+    text-align: left;
+    min-width: 133px;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 11px;
+    margin: 4px 2px;
+    transition: 0.4s;
+    cursor: pointer;
+    border-radius: 5px;
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+}
+
+.btn:hover {
+    background-color: #45a049; /* Темно-зеленый фон при наведении */
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.3); /* Более заметная тень при наведении */
+}
+
+.stock-widget {
+    font-family: 'Arial', sans-serif;
+    font-size: 9pt;
+    color: #fff;
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    padding: 3px;
+    margin: 3px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.stock-widget table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stock-widget th, .stock-widget td {
+    padding: 8px;
+    text-align: left;
+    border-radius: 4px;
+    border: 1px solid #333;
+    transition: transform 0.3s ease;
+}
+
+.stock-widget th:first-child, .stock-widget td:first-child {
+    width: 5%;
+}
+
+.stock-widget th:nth-child(2), .stock-widget td:nth-child(2) {
+    text-align: left;
+    width: 30%; /* Цена покупки */
+}
+
+.stock-widget th:nth-child(3), .stock-widget td:nth-child(3) {
+    width: 30%; /* Количество */
+    text-align: right;
+}
+
+
+.purchaise th:nth-child(4), .stock-widget td:nth-child(4) {
+    min-width: 70px; /* % */
+    text-align: right;
+}
+
+.purchaise th:nth-child(5), .stock-widget td:nth-child(5) {
+    min-width: 150px; /* Разница */
+    text-align: right;
+}
+
+
+.stock-widget tr:hover {
+    background-color: #444; /* Светлее при наведении */
+    transform: scale(1.02); /* Немного увеличиваем при наведении */
+}
+
+.red, .stock-widget tr.red:hover {
+    background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.green, .stock-widget tr.green:hover {
+    background-color: darkseagreen !important; /* Насыщенный зелёный */
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+#balance {
+    font-weight: bolder;
+    font-size: 12pt;
+    color: dodgerblue;
+}
+
+#exchange-timer {
+    padding: 5px 10px;
+    background: linear-gradient(to right, #6a11cb, #2575fc); /* Градиентный фон */
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 8px; /* Скругленные углы */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Небольшая тень для объема */
+    display: inline-block;
+    width: auto;
+    transition: all 0.3s ease; /* Плавные изменения */
+}

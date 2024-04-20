@@ -1,0 +1,76 @@
+/* Основные стили таблицы */
+.dataTables_wrapper {
+    color: #fff; /* Белый текст */
+    background-color: #2b2b2b; /* Тёмный фон */
+}
+
+/* Стилизация заголовков таблицы */
+.dataTables_wrapper .dataTables_length label,
+.dataTables_wrapper .dataTables_filter label {
+    color: #fff;
+}
+
+/* Стилизация строк таблицы */
+.dataTables_wrapper .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #fff !important;
+    background-color: #444 !important;
+}
+
+/* Стили для строк таблицы */
+.dataTables_wrapper tbody tr {
+    background-color: #333; /* Тёмные строки */
+}
+
+/* Стили для строк таблицы при наведении */
+.dataTables_wrapper tbody tr:hover {
+    background-color: #444; /* Светлее при наведении */
+}
+
+/* Стилизация ячеек таблицы */
+.dataTables_wrapper table.dataTable thead th,
+.dataTables_wrapper table.dataTable tbody td {
+    border-color: #333; /* Тёмный бордер для элементов таблицы */
+}
+
+/* Стили для кнопок и пагинации */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    color: #fff !important;
+    border: 1px solid #333;
+    background-color: #666 !important; /* Цвет фона текущей кнопки пагинации */
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #555 !important; /* Цвет фона при наведении */
+    border-color: #222;
+}
+
+/* Скрывает стрелки сортировки, если они не нужны */
+table.dataTable thead .sorting:after,
+table.dataTable thead .sorting_asc:after,
+table.dataTable thead .sorting_desc:after {
+    display: none;
+}
+
+/* Стилизация пагинации */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #fff !important; /* Цвет текста кнопок */
+    padding: 5px 10px;
+    margin: 0 3px;
+    border-radius: 4px; /* Скругление углов */
+}
+
+/* Стили для чётных строк */
+.dataTables_wrapper table.dataTable tbody tr:nth-child(even) {
+    background-color: #333; /* Тёмный цвет для чётных строк */
+}
+
+/* Стили для нечётных строк */
+.dataTables_wrapper table.dataTable tbody tr:nth-child(odd) {
+    background-color: #2b2b2b; /* Чуть светлее для нечётных строк */
+}
+
+/* Стили для строк при наведении */
+.dataTables_wrapper table.dataTable tbody tr:hover {
+    background-color: #444; /* Светлее при наведении */
+}

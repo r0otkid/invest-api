@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Widget</title>
+    <link rel="stylesheet" href="static/css/styles.css" />
+    <link rel="stylesheet" href="static/css/data-tables.css" />
+  </head>
+
+  <body>
+    <div class="content">
+      <div class="toolbox">
+        <div>
+          [<code id="tariff"></code>] <b>БАЛАНС</b>: <code id="balance">{{ balance }}</code> RUB
+        </div>
+        <div>
+          <button class="btn" id="delete-acc">🔨 Удалить аккаунты</button>
+          <button class="btn" id="open-acc">🚀 Открыть аккаунт</button>
+          <button class="btn" id="add-money">💰 Пополнить баланс</button>
+        </div>
+        <div id="exchange-timer">Загрузка времени...</div>
+      </div>
+      <div id="stock-widget" class="stock-widget">
+        <table>
+          <thead>
+            <tr>
+              <th></th>
+              <th>FIGI</th>
+              <th>Ticker</th>
+              <th style="text-align: right">Price (RUB)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Данные будут добавляться сюда динамически -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="stock-widget" style="display: none;">
+      <table class="purchaise">
+        <thead>
+          <tr>
+            <th>Instrument</th>
+            <th>Purchase (RUB)</th>
+            <th>Quantity</th>
+            <th>All time %</th>
+            <th>Profit (RUB)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="purchase-ZAYM">
+            <td>ZAYM</td>
+            <td>230.29</td>
+            <td>170</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-VTBR">
+            <td>VTBR</td>
+            <td>0.023215</td>
+            <td>1120000</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-GMKN">
+            <td>GMKN</td>
+            <td>154.56</td>
+            <td>130</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-WUSH">
+            <td>WUSH</td>
+            <td>221.79</td>
+            <td>120</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-TMOS">
+            <td>TMOS</td>
+            <td>6.72</td>
+            <td>3832</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-TGLD">
+            <td>TGLD</td>
+            <td>7.49</td>
+            <td>5000</td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr id="purchase-TLCB">
+            <td>TLCB</td>
+            <td>10.32</td>
+            <td>3234</td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
+    <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+    <script src="/static/js/db.js"></script>
+    <script src="/static/js/bot.js"></script>
+    <script src="/static/js/sock.js"></script>
+    <script src="/static/js/toolbox.js"></script>
+    <script src="/static/js/analyse.js"></script>
+
+    <script>
+        const instruments = {{ instruments|tojson }};
+        const token = "{{ token }}";
+        const botToken = "{{ bot_token }}";
+        const chatId = "{{ chat_id }}";
+        const protocols = ['json', token];
+        const figiList = {{ figi_list|tojson }};
+
+        // websocket
+        const ws = new WebSocket(
+            'wss://invest-public-api.tinkoff.ru/ws/tinkoff.public.invest.api.contract.v1.MarketDataStreamService/MarketDataStream',
+            protocols
+        );
+
+        // Data Tables
+        $(document).ready( function () {
+          $('.purchaise').DataTable({
+              "paging": true,
+              "ordering": true,
+              "info": true,
+              "searching": true,
+              "order": [[4, "asc"]] // Настройка начальной сортировки (например, по первому столбцу по возрастанию)
+          });
+        });
+    </script>
+  </body>
+</html>
