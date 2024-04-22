@@ -141,7 +141,8 @@ function calculateProbabilityOfGrowth(ticker) {
             request.onsuccess = (event) => {
                 const prices = event.target.result.map(item => item.price);
                 if (!prices.length) {
-                    reject(new Error('No prices available for the ticker.'));
+                    console.log(`No prices available for the ticker ${ticker}`);
+                    reject(new Error(`No prices available for the ticker ${ticker}.`));
                     return;
                 }
 
@@ -196,7 +197,81 @@ function calculateProbabilityOfGrowth(ticker) {
     });
 }
 
+function analyzeAllTickers() {
+    return openDatabase().then(db => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['quotes'], 'readonly');
+            const store = transaction.objectStore('quotes');
+            const tickerIndex = store.index('ticker');
+            const request = tickerIndex.getAll();  // Изменено с getAllKeys() на getAll()
 
+            request.onsuccess = (event) => {
+                // Сначала извлекаем все записи, затем из каждой записи берем поле 'ticker'
+                const tickers = [...new Set(event.target.result.map(item => item.ticker))];  // Уникальные тикеры
+
+                const results = {};
+                let analyzedCount = 0;
+
+                if (tickers.length === 0) {
+                    reject('No tickers found in the database.');
+                    return;
+                }
+
+                tickers.forEach(ticker => {
+                    calculateProbabilityOfGrowth(ticker).then(probability => {
+                        results[ticker] = probability;
+                        analyzedCount++;
+                        if (analyzedCount === tickers.length) {
+                            resolve(results); // Все тикеры проанализированы, возвращаем результаты
+                        }
+                    }).catch(error => {
+                        console.error(`Error analyzing ticker ${ticker}: ${error}`);
+                        results[ticker] = 'Analysis failed';
+                        analyzedCount++;
+                        if (analyzedCount === tickers.length) {
+                            resolve(results);
+                        }
+                    });
+                });
+            };
+
+            request.onerror = (event) => {
+                console.error('Failed to fetch tickers:', event.target.error.message);
+                reject(new Error(`Error fetching tickers: ${event.target.errorCode}`));
+            };
+        });
+    });
+}
+
+function selectBestTradingOptions() {
+    return analyzeAllTickers().then(results => {
+        let maxProb = -1, minProb = 101;
+        let bestToBuy = null, bestToSell = null;
+
+        for (let ticker in results) {
+            const prob = parseFloat(results[ticker]);
+            if (!isNaN(prob)) {
+
+                if (prob > maxProb) {
+                    maxProb = prob;
+                    bestToBuy = ticker;
+                }
+                if (prob < minProb) {
+                    minProb = prob;
+                    bestToSell = ticker;
+                }
+            }
+        }
+
+        return {
+            bestToBuy: { ticker: bestToBuy, probability: maxProb.toFixed(2) },
+            bestToSell: { ticker: bestToSell, probability: minProb.toFixed(2) }
+        };
+    }).catch(error => {
+        console.error('Failed to analyze tickers for trading options:', error);
+        throw error;
+    });
+}
 
 
 // Функция для вызова calculateProbabilityOfGrowth из консоли:

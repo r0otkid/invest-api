@@ -9,6 +9,28 @@
     padding-left: 15px;
 }
 
+.tab-links {
+    list-style-type: none;
+    padding-left: 0;
+    margin-bottom: 0;
+}
+.tab-links .tab-link {
+    display: inline-block;
+    padding: 5px 15px;
+    margin-right: 5px;
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+.tab-links .tab-link.active {
+    background-color: #d8d8d8;
+}
+.tab-content .tab-pane {
+    display: none;
+}
+.tab-content .tab-pane.active {
+    display: block;
+}
+
 .btn {
     background-color: #4CAF50;
     text-align: left;
@@ -87,6 +109,7 @@
     background-color: #444; /* Светлее при наведении */
     transform: scale(1.02); /* Немного увеличиваем при наведении */
 }
+
 
 .red, .stock-widget tr.red:hover {
     background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */

@@ -34,53 +34,90 @@ function openDatabase() {
 }
 
 function addQuote(ticker, price) {
-    const transaction = db.transaction(["quotes"], "readwrite");
-    const store = transaction.objectStore("quotes");
-    const quote = {
-        ticker: ticker,
-        price: price,
-        timestamp: new Date().getTime() // Добавляем временную метку для каждой записи
-    };
+    openDatabase().then(db => {
+        const transaction = db.transaction(["quotes"], "readwrite");
+        const store = transaction.objectStore("quotes");
+        const quote = {
+            ticker: ticker,
+            price: price,
+            timestamp: new Date().getTime()
+        };
 
-    // Сначала удаляем старые данные
-    deleteOldQuotes();
+        const request = store.add(quote);
+        request.onsuccess = function () {
+            // console.log("Quote added to the database", quote);
+        };
 
-    // Добавляем новую котировку
-    const request = store.add(quote);
-
-    request.onsuccess = function () {
-        console.log("Quote added to the database", quote);
-    };
-
-    request.onerror = function (event) {
-        console.error("Error writing to the database", event.target.errorCode);
-    };
+        request.onerror = function (event) {
+            console.error("Error writing to the database", event.target.errorCode);
+        };
+    }).catch(error => {
+        console.error("Error opening database:", error);
+    });
 }
 
 function deleteOldQuotes() {
-    const oneMonthAgo = new Date();
-    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    if (!db) {
+        console.error("Database has not been initialized.");
+        return;
+    }
 
-    const transaction = db.transaction(["quotes"], "readwrite");
-    const store = transaction.objectStore("quotes");
-    const index = store.index("timestamp"); // Предполагается, что у вас есть индекс по временной метке
+    openDatabase().then(db => {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    const range = IDBKeyRange.upperBound(oneMonthAgo.getTime());
-    const request = index.openCursor(range);
+        const transaction = db.transaction(["quotes"], "readwrite");
+        const store = transaction.objectStore("quotes");
+        const index = store.index("timestamp"); // Предполагается, что у вас есть индекс по временной метке
 
-    request.onsuccess = function (event) {
-        const cursor = event.target.result;
-        if (cursor) {
-            store.delete(cursor.primaryKey);
-            cursor.continue();
-        } else {
-            console.log("Old quotes deleted up to one month ago.");
-        }
-    };
+        const range = IDBKeyRange.upperBound(oneMonthAgo.getTime());
+        const request = index.openCursor(range);
 
-    request.onerror = function (event) {
-        console.error("Error deleting old quotes", event.target.errorCode);
-    };
+        request.onsuccess = function (event) {
+            const cursor = event.target.result;
+            if (cursor) {
+                store.delete(cursor.primaryKey);
+                cursor.continue();
+            } else {
+                console.log("Old quotes deleted up to one month ago.");
+            }
+        };
+
+        request.onerror = function (event) {
+            console.error("Error deleting old quotes", event.target.errorCode);
+        };
+    }).catch(error => {
+        console.error("Error opening database:", error);
+    });
+}
+
+function fetchAllTickerData() {
+    return openDatabase().then(db => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['quotes'], 'readonly');
+            const store = transaction.objectStore('quotes');
+            const index = store.index('ticker');
+            const request = index.getAll(); // Получаем все записи
+
+            request.onsuccess = (event) => {
+                const records = event.target.result;
+                const dataByTicker = records.reduce((acc, record) => {
+                    if (!acc[record.ticker]) {
+                        acc[record.ticker] = [];
+                    }
+                    acc[record.ticker].push({ price: record.price, timestamp: record.timestamp });
+                    return acc;
+                }, {});
+
+                resolve(dataByTicker);
+            };
+
+            request.onerror = (event) => {
+                console.error('Failed to fetch ticker data:', event.target.error.message);
+                reject(new Error(`Error fetching ticker data: ${event.target.errorCode}`));
+            };
+        });
+    });
 }
 
 async function generateData() {

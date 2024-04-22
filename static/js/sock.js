@@ -1,6 +1,4 @@
 $(document).ready(function () {
-    const previousPrice = {};
-
     const subscribeToCandles = () => {
         const instrList = figiList.map(figi => ({
             figi,
@@ -36,7 +34,19 @@ $(document).ready(function () {
 
         updateOrAppendStockElement(instrument, ticker, closePrice);
         updateStockPriceAndPercentDifference(ticker, closePrice);
+
+        // update charts
+        if (data.candle) {
+            const closePrice = parseFloat(data.candle.close.units) + data.candle.close.nano / 1e9;
+            const figi = data.candle.figi;
+            const instrument = instruments.find(inst => inst.figi === figi);
+            if (instrument) {
+                const ticker = instrument.ticker;
+                updateChart(ticker, closePrice, data.candle.time);
+            }
+        }
     };
+
     const updateStockPriceAndPercentDifference = (ticker, closePrice) => {
         let purchaseRow = $(`#purchase-${ticker}`);
         if (purchaseRow.length === 0) {
@@ -69,6 +79,7 @@ $(document).ready(function () {
                 `<tr id="stock-${instrument.ticker}" class="stock" data-price="${closePrice}">
                     <td><img width='15px' height='15px' style='border-radius: 50%; margin-right: 5px;' src="/static/img/${instrument.ticker}.png" alt="${instrument.name}" title="${instrument.name}" /></td>
                     <td>${instrument.name}</td>
+                    <td></td>
                     <td>${ticker}</td>
                     <td><b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
                 </tr>`
@@ -86,8 +97,32 @@ $(document).ready(function () {
                 color = 'red';
                 icon = '-';
             }
+            // analytics
+            analyzeAllTickers().then(
+                analyze => {
+                    stockRow.find('td:eq(2)').html(
+                        `${analyze[instrument.ticker]} %`
+                    );
+                }
+            )
+            selectBestTradingOptions().then(
+                best => {
+                    const { bestToBuy, bestToSell } = best;
 
-            stockRow.find('td:eq(3)').html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
+                    const tickerToBuy = bestToBuy.ticker;
+                    const tickerToSell = bestToSell.ticker;
+
+                    $('#stock-widget tbody tr').find('td:eq(1)').css('color', 'white');
+
+                    $(`#stock-${tickerToBuy}`).find('td:eq(1)').css('color', 'green');
+
+                    $(`#stock-${tickerToSell}`).find('td:eq(1)').css('color', 'red');
+                }
+            ).catch(error => {
+                console.error('Ошибка при выполнении selectBestTradingOptions:', error);
+            });
+
+            stockRow.find('td:eq(4)').html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
         }
         addQuote(instrument.ticker, closePrice);
     };
