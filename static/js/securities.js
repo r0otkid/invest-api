@@ -4,7 +4,6 @@ const getAllSecurities = () => {
             url: '/all-securities',
             type: 'GET',
             success: (response) => {
-                console.log('Информация о портфеле получена', response);
                 const securities = response.securities;
                 resolve(securities);
             },
@@ -15,21 +14,3 @@ const getAllSecurities = () => {
         });
     });
 }
-
-$(document).ready(function () {
-    setTimeout(() => {
-        getAllSecurities().then(securities => {
-            securities.forEach(security => {
-                console.log(securities)
-                const uid = security.instrument_uid;
-                const balance = security.balance;
-                $(`#securities-${uid}`).html(balance);
-            });
-            console.log('📊 Бумаги загружены:', securities);
-            sendMessage("📊 Загружены бумаги из портфеля: " + securities.length);
-        }).catch(error => {
-            console.error('👺 Ошибка при загрузке бумаг:', error);
-            sendMessage('👺 Ошибка при загрузке бумаг:', error);
-        });
-    }, 10000)
-});

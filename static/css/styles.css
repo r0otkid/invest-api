@@ -182,3 +182,14 @@ body {
     height: 15px;
     margin-right:5px;
 }
+
+#state-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#current-state {
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    color: dodgerblue;
+}

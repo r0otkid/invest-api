@@ -50,7 +50,6 @@ const getTariff = () => {
             url: '/info',
             type: 'GET',
             success: (response) => {
-                console.log('Информация получена', response);
                 const tariff = response.tariff;
                 resolve(tariff);
             },

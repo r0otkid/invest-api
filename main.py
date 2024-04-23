@@ -1,5 +1,6 @@
 from decimal import Decimal
 import json
+import logging
 import os
 from typing import Optional
 from tinkoff.invest.utils import quotation_to_decimal
@@ -18,6 +19,7 @@ from api.account import (
 from api.instrument import find_instruments
 from settings import BOT_TOKEN, TOKEN, ROOT_ID
 from api.order import buy_order_create, get_all_orders, sell_order_create
+from strategy.strategy1 import Strategy
 from utils import get_account_id
 
 
@@ -31,21 +33,23 @@ IMOEX_FIGI = "BBG333333333"
 TGOLD_FIGI = "TCS10A101X50"
 TLCB_FIGI = "TCS00A107597"
 
+global_strategy = Strategy()
+BUY_PRICES = {}
+
 
 async def create_order(request, order_type):
     """Общая функция для создания рыночного ордера на покупку или продажу."""
     acc_id = request.query.get("acc_id", await get_account_id(accounts=await get_accounts()))
     instrument_id = request.query.get("instrument_id")
+    amount = int(request.query.get("amount"))
 
     if not instrument_id:
         return web.json_response({"error": "Instrument ID is required"})
 
     if order_type == "buy":
-        response = await buy_order_create(
-            account_id=acc_id, instrument_id=instrument_id, quantity=28
-        )  #  todo: quantity
+        response = await buy_order_create(account_id=acc_id, instrument_id=instrument_id, quantity=amount)
     else:
-        response = await sell_order_create(account_id=acc_id, instrument_id=instrument_id, quantity=28)
+        response = await sell_order_create(account_id=acc_id, instrument_id=instrument_id, quantity=amount)
 
     return web.json_response(response)
 
@@ -89,7 +93,26 @@ async def root(request):
 
 @routes.get("/start")
 async def start(request):
+    global_strategy.signal = True
     return web.json_response({})
+
+
+@routes.get("/strategy")
+async def strategy(request):
+    global_strategy.add_data(request)
+    message, best_to_buy, best_to_sell = global_strategy.analyze_data()
+
+    if message:
+        # Если есть сообщение, возвращаем его в ответе
+        return web.json_response({'message': message})
+
+    # В противном случае возвращаем рекомендации к действиям
+    return web.json_response(
+        {
+            'to_buy': best_to_buy if best_to_buy else "No profitable buy options",
+            'to_sell': best_to_sell if best_to_sell else "No profitable sell options",
+        }
+    )
 
 
 @routes.get("/accounts")

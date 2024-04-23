@@ -1,4 +1,111 @@
 $(document).ready(function () {
+    const pingStrategy = (analyze, bestToBuy, bestToSell, closePrice, previousPrice) => {
+        const sl = $('#sl').val();
+        const tp = $('#tp').val();
+        $.ajax({
+            url: `/strategy?sl=${sl}&tp=${tp}&analyze=${JSON.stringify(analyze)}&best_to_buy=${JSON.stringify(bestToBuy)}&best_to_sell=${JSON.stringify(bestToSell)}&close_price=${closePrice}&previous_price=${previousPrice}`,
+            type: 'GET',
+            success: (response) => {
+                if (response.message) {
+                    $('#current-state').html(response.message).css('color', 'dodgerblue');
+                } else {
+                    $('#current-state').html(
+                        `📉Получен сигнал к покупке: ${response.to_buy}<br />📈 Получен сигнал к продаже: ${response.to_sell}`
+                    ).css('color', 'darkseagreen');
+
+                    // todo: делаем запрос на покупку/продажу, предварительно проверив активы (можно с клиента)
+                    // 1. BUY
+                    const instrumentForBuy = instruments.find(inst => inst.ticker === response.to_buy);
+                    const uidForBuy = instrumentForBuy.uid;
+                    const balance = parseFloat($('#balance').html());
+                    const price = parseFloat($(`#stock-${instrumentForBuy.ticker} td:nth-child(6) b`).text().trim().replace('-', '').replace('+', '').trim());
+                    console.log(balance, price)
+                    const amount = parseInt(balance / price);
+                    console.log(amount)
+                    amount > 0 && $.ajax({
+                        url: `/create-buy-order?instrument_id=${uidForBuy}&amount=${amount}`,
+                        type: 'GET',
+                        success: (response) => {
+                            console.log('Создан ордер на покупку!', response);
+                            $.ajax({
+                                url: `/start`,
+                                type: 'GET',
+                                success: (response) => {
+                                    console.log('Сигналы сервера включены', response);
+                                    // update balance and securities
+                                    $.ajax({
+                                        url: '/get-balance',
+                                        type: 'GET',
+                                        success: function (response) {
+                                            console.log(response)
+                                            $('#balance').text(response);
+                                        },
+                                    });
+                                    getAllSecurities().then(securities => {
+                                        securities.forEach(security => {
+                                            const uid = security.instrument_uid;
+                                            const balance = security.balance;
+                                            $(`#securities-${uid}`).html(balance);
+                                        });
+                                    }).catch(error => {
+                                        console.error('👺 Ошибка при загрузке бумаг:', error);
+                                    });
+                                }
+                            });
+                        },
+                        error: (error) => {
+                            console.log('Не получилось создать ордер на покупку!', response)
+                        }
+                    });
+
+                    // SELL
+                    const instrumentForSell = instruments.find(inst => inst.ticker === response.to_sell);
+                    const uidForSell = instrumentForSell.uid;
+                    const securitiesCount = parseInt($(`#securities-${uidForSell}`).html());
+                    securitiesCount > 0 && $.ajax({
+                        url: `/create-sell-order?instrument_id=${uidForBuy}&amount=${securitiesCount}`,
+                        type: 'GET',
+                        success: (response) => {
+                            console.log('Создан ордер на продажу!', response)
+                            $.ajax({
+                                url: `/start`,
+                                type: 'GET',
+                                success: (response) => {
+                                    console.log('Сигналы сервера включены', response);
+                                    // update balance and securities
+                                    $.ajax({
+                                        url: '/get-balance',
+                                        type: 'GET',
+                                        success: function (response) {
+                                            console.log(response)
+                                            $('#balance').text(response);
+                                        },
+                                    });
+                                    getAllSecurities().then(securities => {
+                                        securities.forEach(security => {
+                                            const uid = security.instrument_uid;
+                                            const balance = security.balance;
+                                            $(`#securities-${uid}`).html(balance);
+                                        });
+                                    }).catch(error => {
+                                        console.error('👺 Ошибка при загрузке бумаг:', error);
+                                    });
+                                }
+                            });
+                        },
+                        error: (error) => {
+                            console.log('Не получилось создать ордер на продажу!', response)
+                        }
+                    });
+                }
+                console.log('Информация от стратегии получена', response);
+            },
+            error: (error) => {
+                console.log('Ошибка связи со стратегией', error);
+            }
+        });
+    };
+
     const subscribeToCandles = () => {
         const instrList = figiList.map(figi => ({
             figi,
@@ -67,7 +174,6 @@ $(document).ready(function () {
             );
             getAllSecurities().then(securities => {
                 securities.forEach(security => {
-                    console.log(securities)
                     const uid = security.instrument_uid;
                     const balance = security.balance;
                     $(`#securities-${uid}`).html(balance);
@@ -87,14 +193,6 @@ $(document).ready(function () {
                 color = 'red';
                 icon = '-';
             }
-            // analytics
-            analyzeAllTickers().then(
-                analyze => {
-                    stockRow.find('td:eq(3)').html(
-                        `${analyze[instrument.ticker]} %`
-                    );
-                }
-            )
             selectBestTradingOptions().then(
                 best => {
                     const { bestToBuy, bestToSell } = best;
@@ -107,6 +205,16 @@ $(document).ready(function () {
                     $(`#stock-${tickerToBuy}`).find('td:eq(1)').css('color', 'darkseagreen');
 
                     $(`#stock-${tickerToSell}`).find('td:eq(1)').css('color', 'rgb(255, 107, 53)');
+
+                    // analytics
+                    analyzeAllTickers().then(
+                        analyze => {
+                            stockRow.find('td:eq(3)').html(
+                                `${analyze[instrument.ticker]} %`
+                            );
+                            isBotStarted && pingStrategy(analyze, bestToBuy, bestToSell, closePrice, previousPrice);
+                        }
+                    )
                 }
             ).catch(error => {
                 console.error('Ошибка при выполнении selectBestTradingOptions:', error);
