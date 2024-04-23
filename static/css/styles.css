@@ -1,3 +1,7 @@
+body {
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a); 
+}
+
 .toolbox {
     display: flex;
     align-items: center;
@@ -10,6 +14,7 @@
 }
 
 .tab-links {
+    display: none;
     list-style-type: none;
     padding-left: 0;
     margin-bottom: 0;
@@ -18,11 +23,13 @@
     display: inline-block;
     padding: 5px 15px;
     margin-right: 5px;
-    background-color: #f0f0f0;
+    background-color: #2b2b2b;
+    color: silver;
     cursor: pointer;
 }
 .tab-links .tab-link.active {
-    background-color: #d8d8d8;
+    background-color: #3a3f4b;
+    border-color: #4CAF50;
 }
 .tab-content .tab-pane {
     display: none;
@@ -33,8 +40,8 @@
 
 .btn {
     background-color: #4CAF50;
-    text-align: left;
-    min-width: 133px;
+    text-align: center;
+    min-width: 140px;
     border: none;
     color: white;
     padding: 6px 12px;
@@ -83,24 +90,18 @@
     width: 5%;
 }
 
-.stock-widget th:nth-child(2), .stock-widget td:nth-child(2) {
-    text-align: left;
-    width: 30%; /* Цена покупки */
+.stock-widget th:last-child, .stock-widget td:last-child {
+    width: 15%;
 }
+
 
 .stock-widget th:nth-child(3), .stock-widget td:nth-child(3) {
-    width: 30%; /* Количество */
-    text-align: right;
+    text-align: left;
+    width: 20%;
 }
 
-
-.purchaise th:nth-child(4), .stock-widget td:nth-child(4) {
-    min-width: 70px; /* % */
-    text-align: right;
-}
-
-.purchaise th:nth-child(5), .stock-widget td:nth-child(5) {
-    min-width: 150px; /* Разница */
+.stock-widget th:nth-child(4), .stock-widget td:nth-child(4) {
+    width: 20%;
     text-align: right;
 }
 
@@ -110,6 +111,39 @@
     transform: scale(1.02); /* Немного увеличиваем при наведении */
 }
 
+
+.orders {
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    color: #abb2bf; /* светлый текст */
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.orders label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 16px;
+}
+
+.orders input[type="number"] {
+    background: linear-gradient(to right, #3a3f4b, #1a1a1a); /* Тёмный градиент */
+    color: #abb2bf; /* цвет текста */
+    border: none;
+    padding: 8px;
+    border-radius: 4px;
+    width: 100%; /* Полная ширина относительно контейнера */
+    box-sizing: border-box; /* чтобы padding не изменял размеры */
+    margin-bottom: 15px; /* отступ снизу */
+}
+
+.orders input[type="number"]::placeholder {
+    color: #636d83; /* цвет placeholder */
+}
+
+.orders input[type="number"]:focus {
+    outline: none;
+    border: 2px solid #61afef; /* подсветка при фокусе */
+}
 
 .red, .stock-widget tr.red:hover {
     background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */
@@ -139,4 +173,12 @@
     display: inline-block;
     width: auto;
     transition: all 0.3s ease; /* Плавные изменения */
+}
+
+#status {
+    display: inline-block;
+    border-radius: 50%;
+    width:15px;
+    height: 15px;
+    margin-right:5px;
 }

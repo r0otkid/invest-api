@@ -12,7 +12,9 @@
     <div class="content">
       <div class="toolbox">
         <div>
-          [<code id="tariff"></code>] <b>БАЛАНС</b>: <code id="balance">{{ balance }}</code> RUB
+          <span id="status" class="red">&nbsp;</span>[<code id="tariff"></code>]
+          <br />
+          <b>БАЛАНС</b>: <code id="balance">{{ balance }}</code> RUB
         </div>
         <div>
           <button class="btn" id="delete-acc">🔨 Удалить аккаунты</button>
@@ -27,6 +29,7 @@
             <tr>
               <th></th>
               <th>FIGI</th>
+              <th>Securities</th>
               <th>Analytics</th>
               <th>Ticker</th>
               <th style="text-align: right">Price (RUB)</th>
@@ -38,73 +41,18 @@
         </table>
       </div>
     </div>
-    <div class="stock-widget" style="display: none;">
-      <table class="purchaise">
-        <thead>
-          <tr>
-            <th>Instrument</th>
-            <th>Purchase (RUB)</th>
-            <th>Quantity</th>
-            <th>All time %</th>
-            <th>Profit (RUB)</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr id="purchase-ZAYM">
-            <td>ZAYM</td>
-            <td>230.29</td>
-            <td>170</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-VTBR">
-            <td>VTBR</td>
-            <td>0.023215</td>
-            <td>1120000</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-GMKN">
-            <td>GMKN</td>
-            <td>154.56</td>
-            <td>130</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-WUSH">
-            <td>WUSH</td>
-            <td>221.79</td>
-            <td>120</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-TMOS">
-            <td>TMOS</td>
-            <td>6.72</td>
-            <td>3832</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-TGLD">
-            <td>TGLD</td>
-            <td>7.49</td>
-            <td>5000</td>
-            <td></td>
-            <td></td>
-          </tr>
-          <tr id="purchase-TLCB">
-            <td>TLCB</td>
-            <td>10.32</td>
-            <td>3234</td>
-            <td></td>
-            <td></td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
     <div class="tabs">
       <ul class="tab-links"></ul>
       <div class="tab-content"></div>
+    </div>
+    <div class="orders">
+      <label for="sl">Stop Loss</label>
+      <input type="number" id="sl" value="0" placeholder="%" />
+      <label for="tp">Take Profit</label>
+      <input type="number" id="tp" value="0" placeholder="%" />
+      <button style="float: right;" class="btn" id="start">Start Bot</button>
+      <br />
+      <br />
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
@@ -116,6 +64,7 @@
     <script src="/static/js/toolbox.js"></script>
     <script src="/static/js/chart.js"></script>
     <script src="/static/js/analyse.js"></script>
+    <script src="/static/js/securities.js"></script>
 
     <script>
         const instruments = {{ instruments|tojson }};
@@ -131,34 +80,64 @@
             protocols
         );
 
-        // Data Tables
-        $(document).ready( function () {
-          $('.purchaise').DataTable({
-              "paging": true,
-              "ordering": true,
-              "info": true,
-              "searching": true,
-              "order": [[4, "asc"]] // Настройка начальной сортировки (например, по первому столбцу по возрастанию)
+        $(document).ready(function () {
+          fetchAllTickerData().then(dataByTicker => {
+              createCharts(dataByTicker);
+          }).catch(error => {
+              console.error('Error creating charts:', error);
           });
-        });
 
-        // analytics
-        $('#stock-widget tbody').on('click', 'tr[id^="stock-"]', function() {
-          // Асинхронно вызываем analyzeAllTickers и selectBestTradingOptions
-          Promise.all([analyzeAllTickers(), selectBestTradingOptions()])
-              .then(results => {
-                let trId = $(this).attr('id');
-    
-                // Извлекаем название инструмента, удаляя префикс 'stock-'
-                let instrumentName = trId.substring(6); 
-                const res = results[0][instrumentName];
-                const msg = `Получена аналитика по ${instrumentName}: ${res}% вероятности роста цены`;
-                sendMessage(msg);
-              })
-              .catch(error => {
-                  console.error('Ошибка выполнения:', error);
-              });
-      });
+          const balance = $("#balance");
+          balance.css('cursor', 'pointer');
+          balance.click(function() {
+            $.ajax({
+                url: '/get-balance',
+                type: 'GET',
+                success: function(response) {
+                    console.log(response)
+                    balance.text(response);
+                },
+                error: function(xhr, status, error) {
+                    console.error("Произошла ошибка при получении баланса: " + error);
+                }
+            });
+          });
+
+          $(document).on('click', `[id^='stock-']`, function() {
+            const ticker = this.id.replace('stock-', '');
+            const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
+            tabButton.click();
+          });
+
+          $(document).on('click', `[id^='stock-']`, function() {
+            const ticker = this.id.replace('stock-', '');
+            const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
+            tabButton.click();
+          });
+
+          const start = $('#start');
+          start.on('click', () => {
+            $.ajax({
+              url: '/start',
+              type: 'GET',
+              success: (response) => {
+                  console.log('Торговый бот запущен');
+                  if(start.html() === 'Stop Bot') {
+                      $('#status').removeClass('green').addClass('red')
+                      start.html('Start Bot');
+                      start.css('background-color', 'darkseagreen')
+                  } else {
+                      $('#status').removeClass('red').addClass('green')
+                      start.html('Stop Bot');
+                      start.css('background-color', 'orangered')
+                  }
+              },
+              error: (error) => {
+                  console.log(error);
+              }
+          });
+          })
+        })
     </script>
   </body>
 </html>

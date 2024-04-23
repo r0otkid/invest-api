@@ -84,7 +84,7 @@ const getAccounts = () => {
 const updateExchangeTimer = () => {
     const now = new Date();
     const openingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 9, 0, 0); // 9:00 утра
-    const closingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 0, 0); // 17:00 вечера
+    const closingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 18, 0, 0); // 17:00 вечера
 
     let targetTime;
     let messagePrefix;
@@ -123,9 +123,8 @@ $(document).ready(function () {
         const acc = JSON.parse(accounts[0]);
         console.log('🏛 Аккаунт загружен:', acc);
         sendMessage("🏛 Загружен аккаунт: " + acc.id);
-    })
-        .catch(error => {
-            console.error('👺 Ошибка при загрузке аккаунта:', error);
-            sendMessage('👺 Ошибка при загрузке аккаунта:', error);
-        });
+    }).catch(error => {
+        console.error('👺 Ошибка при загрузке аккаунта:', error);
+        sendMessage('👺 Ошибка при загрузке аккаунта:', error);
+    });
 });

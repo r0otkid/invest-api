@@ -71,13 +71,13 @@ const chartInstances = {};
 
 function updateChart(ticker, price, timestamp) {
     const chartInstance = chartInstances[ticker];
-    // if (!chartInstance) {
-    //     console.error(`Chart instance not found for ticker: ${ticker}`);
-    //     return;
-    // }
+    if (!chartInstance) {
+        console.error(`Chart instance not found for ticker: ${ticker}`);
+        return;
+    }
 
     // Преобразование временной метки в читаемый формат
-    const label = new Date(timestamp).toLocaleDateString();
+    const label = new Date(timestamp).toLocaleTimeString();
 
     // Добавление новых данных
     chartInstance.data.labels.push(label);
@@ -99,6 +99,18 @@ function updateChart(ticker, price, timestamp) {
     });
 }
 
+const plugin = {
+    id: 'customCanvasBackgroundColor',
+    beforeDraw: (chart, args, options) => {
+        const { ctx } = chart;
+        ctx.save();
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.fillStyle = options.color || '#99ffff';
+        ctx.fillRect(0, 0, chart.width, chart.height);
+        ctx.restore();
+    }
+};
+
 function createCharts(dataByTicker) {
     // Получение элементов для вкладок и содержимого
     const tabLinks = document.querySelector('.tab-links');
@@ -109,7 +121,7 @@ function createCharts(dataByTicker) {
         const tickerData = dataByTicker[ticker];
         const filteredData = filterDataByInterval(tickerData);
         const prices = filteredData.map(entry => entry.price);
-        const timestamps = filteredData.map(entry => new Date(entry.timestamp).toLocaleDateString());
+        const timestamps = filteredData.map(entry => new Date(entry.timestamp).toLocaleTimeString());
 
         // Создание новой вкладки
         const tabButton = document.createElement('li');
@@ -138,7 +150,12 @@ function createCharts(dataByTicker) {
                     data: prices,
                     fill: false,
                     borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
+                    tension: 0.1,
+                    backgroundColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 205, 86)'
+                    ],
                 }]
             },
             options: {
@@ -146,8 +163,15 @@ function createCharts(dataByTicker) {
                     y: {
                         beginAtZero: false
                     }
+                },
+                plugins: {
+                    customCanvasBackgroundColor: {
+                        color: '#2b2b2b',
+                    }
                 }
-            }
+            },
+            plugins: [plugin],
+
         });
         chartInstances[ticker] = chartInstance;
 
@@ -170,11 +194,3 @@ function changeTab(event) {
     event.target.classList.add('active');
     document.getElementById(targetId).classList.add('active');
 }
-
-$(document).ready(function () {
-    fetchAllTickerData().then(dataByTicker => {
-        createCharts(dataByTicker);
-    }).catch(error => {
-        console.error('Error creating charts:', error);
-    });
-})

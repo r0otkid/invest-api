@@ -33,15 +33,15 @@ async def add_money_sandbox(account_id: str, money: int, currency="rub"):
         )
 
 
-async def get_account_positions(account_id: str) -> list:
+async def get_account_positions(account_id: str, money_only=True) -> list:
     if IS_PROD:
         async with AsyncClient(TOKEN, target=TARGET) as cli:
             result = await cli.operations.get_positions(account_id=account_id)
-            return result.money
+            return result.money if money_only else result
     else:
         with SandboxClient(TOKEN) as cli:
             result = cli.operations.get_positions(account_id=account_id)
-            return result.money
+            return result.money if money_only else result
 
 
 async def get_info() -> dict:
