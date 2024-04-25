@@ -1,6 +1,5 @@
 from decimal import Decimal
-import json
-import logging
+import motor.motor_asyncio
 import os
 from typing import Optional
 from tinkoff.invest.utils import quotation_to_decimal
@@ -19,29 +18,33 @@ from api.account import (
 from api.instrument import find_instruments
 from settings import BOT_TOKEN, TOKEN, ROOT_ID
 from api.order import buy_order_create, get_all_orders, sell_order_create
-from strategy.strategy1 import Strategy
 from utils import get_account_id
 
+# Создание подключения к MongoDB
+client = motor.motor_asyncio.AsyncIOMotorClient('mongodb://localhost:27017')
+db = client.tin
+collection = db.market_data
 
 routes = web.RouteTableDef()
 
-VTBR_FIGI = "BBG004730ZJ9"  # VTB
-ZAYMER_FIGI = "TCS00A107RM8"
-GMKN_FIGI = "BBG004731489"
-WHOOSH_FIGI = "TCS00A105EX7"
-IMOEX_FIGI = "BBG333333333"
-TGOLD_FIGI = "TCS10A101X50"
-TLCB_FIGI = "TCS00A107597"
 
-global_strategy = Strategy()
-BUY_PRICES = {}
+INSTRUMENTS = [
+    "BBG004730ZJ9",
+    "TCS00A107RM8",
+    "BBG004731489",
+    "TCS00A105EX7",
+    "BBG333333333",
+    "TCS10A101X50",
+    "TCS00A107597",
+    "BBG000LNHHJ9",
+]
 
 
 async def create_order(request, order_type):
     """Общая функция для создания рыночного ордера на покупку или продажу."""
     acc_id = request.query.get("acc_id", await get_account_id(accounts=await get_accounts()))
     instrument_id = request.query.get("instrument_id")
-    amount = int(request.query.get("amount"))
+    amount = int(round(Decimal(request.query.get("amount")), 0))
 
     if not instrument_id:
         return web.json_response({"error": "Instrument ID is required"})
@@ -56,13 +59,9 @@ async def create_order(request, order_type):
 
 @routes.get("/")
 async def root(request):
-    instruments = await find_instruments(VTBR_FIGI)
-    instruments = [*instruments, *await find_instruments(ZAYMER_FIGI)]
-    instruments = [*instruments, *await find_instruments(GMKN_FIGI)]
-    instruments = [*instruments, *await find_instruments(WHOOSH_FIGI)]
-    instruments = [*instruments, *await find_instruments(IMOEX_FIGI)]
-    instruments = [*instruments, *await find_instruments(TGOLD_FIGI)]
-    instruments = [*instruments, *await find_instruments(TLCB_FIGI)]
+    instruments = []
+    for instrument in INSTRUMENTS:
+        instruments = [*instruments, *await find_instruments(instrument)]
 
     account_id = await get_account_id(accounts=await get_accounts())
     if account_id:
@@ -77,15 +76,7 @@ async def root(request):
         "chat_id": ROOT_ID,
         "token": TOKEN,
         "instruments": instruments,
-        "figi_list": [
-            VTBR_FIGI,
-            ZAYMER_FIGI,
-            GMKN_FIGI,
-            WHOOSH_FIGI,
-            IMOEX_FIGI,
-            TGOLD_FIGI,
-            TLCB_FIGI,
-        ],
+        "figi_list": INSTRUMENTS,
     }
     response = aiohttp_jinja2.render_template("base.html", request, context=context)
     return response
@@ -93,26 +84,17 @@ async def root(request):
 
 @routes.get("/start")
 async def start(request):
-    global_strategy.signal = True
     return web.json_response({})
 
 
-@routes.get("/strategy")
-async def strategy(request):
-    global_strategy.add_data(request)
-    message, best_to_buy, best_to_sell = global_strategy.analyze_data()
-
-    if message:
-        # Если есть сообщение, возвращаем его в ответе
-        return web.json_response({'message': message})
-
-    # В противном случае возвращаем рекомендации к действиям
-    return web.json_response(
-        {
-            'to_buy': best_to_buy if best_to_buy else "No profitable buy options",
-            'to_sell': best_to_sell if best_to_sell else "No profitable sell options",
-        }
-    )
+@routes.post("/market-data")
+async def marketData(request):
+    try:
+        data = await request.json()
+        result = await collection.insert_one(data)
+        return web.json_response({'status': 'success', 'inserted_id': str(result.inserted_id)})
+    except Exception as e:
+        return web.json_response({'status': 'error', 'message': str(e)}, status=500)
 
 
 @routes.get("/accounts")
@@ -157,7 +139,7 @@ async def info(request):
 
 @routes.get("/instrument")
 async def instrument(request):
-    search_string = request.query.get("search_string", VTBR_FIGI)
+    search_string = request.query.get("search_string", 'ZAYM')
     return web.json_response(await find_instruments(search_string=search_string))
 
 

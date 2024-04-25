@@ -67,7 +67,6 @@ function createTabs(dataByTicker) {
     }
 }
 
-const chartInstances = {};
 
 function updateChart(ticker, price, timestamp) {
     const chartInstance = chartInstances[ticker];
@@ -98,6 +97,22 @@ function updateChart(ticker, price, timestamp) {
         preservation: true
     });
 }
+
+const updateCharts = (data) => {
+    if (data.candle) {
+        const closePrice = parseFloat(data.candle.close.units) + data.candle.close.nano / 1e9;
+        const figi = data.candle.figi;
+        const instrument = instruments.find(inst => inst.figi === figi);
+        if (instrument) {
+            const ticker = instrument.ticker;
+            try {
+                updateChart(ticker, closePrice, data.candle.time);
+            } catch (e) {
+                console.error('Ошибка при обновлении графика:', e);
+            }
+        }
+    }
+};
 
 const plugin = {
     id: 'customCanvasBackgroundColor',

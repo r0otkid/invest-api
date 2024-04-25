@@ -107,8 +107,7 @@ body {
 
 
 .stock-widget tr:hover {
-    background-color: #444; /* Светлее при наведении */
-    transform: scale(1.02); /* Немного увеличиваем при наведении */
+    background-color: #444;
 }
 
 
@@ -153,6 +152,11 @@ body {
 .green, .stock-widget tr.green:hover {
     background-color: darkseagreen !important; /* Насыщенный зелёный */
     transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.blue {
+    background-color: dodgerblue;
+
 }
 
 #balance {

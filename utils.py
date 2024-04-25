@@ -21,3 +21,8 @@ def convert_to_json(obj):
 async def get_account_id(accounts: list) -> str:
     account = json.loads(accounts["accounts"][0]) if accounts["accounts"] else {"id": ''}
     return account['id']
+
+
+def money_value_to_rub(money_value):
+    # Преобразование структуры MoneyValue в рубли, учитывая 'units' и 'nano'
+    return money_value.units + money_value.nano / 1_000_000_000.0

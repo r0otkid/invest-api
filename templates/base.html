@@ -52,7 +52,7 @@
       <input type="number" id="tp" value="0" placeholder="%" />
       <div id="state-bar">
         <span id="current-state"></span>
-        <button style="float: right;" class="btn" id="start">Start Bot</button>
+        <button style="float: right;" class="btn blue" id="start">Start Bot</button>
       </div>
       <br />
       <br />
@@ -63,6 +63,9 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="/static/js/db.js"></script>
     <script src="/static/js/bot.js"></script>
+    <script src="/static/js/event_handlers.js"></script>
+    <script src="/static/js/utils.js"></script>
+    <script src="/static/js/api.js"></script>
     <script src="/static/js/sock.js"></script>
     <script src="/static/js/toolbox.js"></script>
     <script src="/static/js/chart.js"></script>
@@ -71,12 +74,18 @@
 
     <script>
         let isBotStarted = false;
+        let marketDataIntervalId;
         const instruments = {{ instruments|tojson }};
         const token = "{{ token }}";
         const botToken = "{{ bot_token }}";
         const chatId = "{{ chat_id }}";
         const protocols = ['json', token];
         const figiList = {{ figi_list|tojson }};
+        const chartInstances = {};
+
+        const start = $('#start');
+        const balance = $("#balance");
+        const currentState =  $('current-state');
 
         // websocket
         const ws = new WebSocket(
@@ -91,58 +100,8 @@
               console.error('Error creating charts:', error);
           });
 
-          const balance = $("#balance");
           balance.css('cursor', 'pointer');
-          balance.click(function() {
-            $.ajax({
-                url: '/get-balance',
-                type: 'GET',
-                success: function(response) {
-                    console.log(response)
-                    balance.text(response);
-                },
-                error: function(xhr, status, error) {
-                    console.error("Произошла ошибка при получении баланса: " + error);
-                }
-            });
-          });
-
-          $(document).on('click', `[id^='stock-']`, function() {
-            const ticker = this.id.replace('stock-', '');
-            const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
-            tabButton.click();
-          });
-
-          $(document).on('click', `[id^='stock-']`, function() {
-            const ticker = this.id.replace('stock-', '');
-            const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
-            tabButton.click();
-          });
-
-          const start = $('#start');
-          start.on('click', () => {
-            $.ajax({
-              url: '/start',
-              type: 'GET',
-              success: (response) => {
-                  if(start.html() === 'Stop Bot') {
-                      $('#status').removeClass('green').addClass('red')
-                      start.html('Start Bot');
-                      start.css('background-color', 'darkseagreen')
-                      isBotStarted = false;
-                  } else {
-                      $('#status').removeClass('red').addClass('green')
-                      start.html('Stop Bot');
-                      start.css('background-color', 'orangered')
-                      isBotStarted = true;
-                      console.log('Торговый бот запущен');
-                  }
-              },
-              error: (error) => {
-                  console.log(error);
-              }
-          });
-          })
+          balance.click(() => refreshBalance());
         })
     </script>
   </body>

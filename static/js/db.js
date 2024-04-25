@@ -63,14 +63,14 @@ function deleteOldQuotes() {
     }
 
     openDatabase().then(db => {
-        const oneMonthAgo = new Date();
-        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        const oneDayAgo = new Date();
+        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
 
         const transaction = db.transaction(["quotes"], "readwrite");
         const store = transaction.objectStore("quotes");
         const index = store.index("timestamp"); // Предполагается, что у вас есть индекс по временной метке
 
-        const range = IDBKeyRange.upperBound(oneMonthAgo.getTime());
+        const range = IDBKeyRange.upperBound(oneDayAgo.getTime());
         const request = index.openCursor(range);
 
         request.onsuccess = function (event) {
@@ -115,6 +115,39 @@ function fetchAllTickerData() {
             request.onerror = (event) => {
                 console.error('Failed to fetch ticker data:', event.target.error.message);
                 reject(new Error(`Error fetching ticker data: ${event.target.errorCode}`));
+            };
+        });
+    });
+}
+
+function fetchLatestTickerData() {
+    return openDatabase().then(db => {
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(['quotes'], 'readonly');
+            const store = transaction.objectStore('quotes');
+            const index = store.index('ticker'); // Используем индекс по полю 'ticker'
+            const request = index.openCursor(null, 'prev'); // Открываем курсор в обратном порядке
+
+            let latestDataByTicker = {};
+
+            request.onsuccess = event => {
+                const cursor = event.target.result;
+                if (cursor) {
+                    const record = cursor.value;
+                    // Добавляем запись только если для этого тикера еще не добавлена последняя запись
+                    if (!latestDataByTicker[record.ticker]) {
+                        latestDataByTicker[record.ticker] = { price: record.price, timestamp: record.timestamp };
+                    }
+                    cursor.continue();
+                } else {
+                    // Когда курсор прошел все записи, возвращаем результат
+                    resolve(latestDataByTicker);
+                }
+            };
+
+            request.onerror = event => {
+                console.error('Failed to fetch latest ticker data:', event.target.error.message);
+                reject(new Error(`Error fetching latest ticker data: ${event.target.errorCode}`));
             };
         });
     });
