@@ -5,6 +5,13 @@ from settings import TOKEN
 from utils import convert_to_json
 
 
+async def get_instrument_by_id(instrument_id: str):
+    with Cli(TOKEN) as cli:
+        response = cli.instruments.get_instrument_by(id=instrument_id, id_type=InstrumentIdType(3))  # uid
+        result = response.instrument
+        return result
+
+
 async def find_instruments(search_string: str = '') -> list:
     with Cli(TOKEN) as cli:
         response = cli.instruments.find_instrument(query=search_string)

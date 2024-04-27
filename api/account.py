@@ -1,7 +1,7 @@
 from decimal import Decimal
 from tinkoff.invest import AsyncClient, MoneyValue
 from tinkoff.invest.sandbox.client import SandboxClient
-from tinkoff.invest.utils import decimal_to_quotation
+from tinkoff.invest.utils import decimal_to_quotation, quotation_to_decimal
 from settings import TOKEN, TARGET, IS_PROD
 from utils import convert_to_json
 
@@ -54,3 +54,12 @@ async def get_info() -> dict:
             "tariff": info.tariff,
         }
         return result_dict
+
+
+async def get_balance(account_id: str) -> float:
+    if account_id:
+        positions = await get_account_positions(account_id=account_id)
+        balance = float(quotation_to_decimal(positions[0]))
+    else:
+        balance = float(0)
+    return balance

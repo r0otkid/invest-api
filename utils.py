@@ -26,3 +26,60 @@ async def get_account_id(accounts: list) -> str:
 def money_value_to_rub(money_value):
     # Преобразование структуры MoneyValue в рубли, учитывая 'units' и 'nano'
     return money_value.units + money_value.nano / 1_000_000_000.0
+
+
+async def get_instruments(instrument_list, find_function) -> list:
+    instruments = []
+    for instrument in instrument_list:
+        instruments = [*instruments, *await find_function(instrument)]
+    return instruments
+
+
+# async def create_order(account_id, amount, instrument_id, order_type):
+#     """Общая функция для создания рыночного ордера на покупку или продажу."""
+#     if not instrument_id:
+#         return web.json_response({"error": "Instrument ID is required"})
+
+#     if order_type == "buy":
+#         response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
+#     else:
+#         response = await sell_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
+#     return web.json_response(response)
+
+
+async def process_forecast(collection, new_data) -> dict:
+    market_data = new_data['marketData']
+    forecast_results = {}
+
+    # Получаем последние 30 записей для каждого тикера
+    for ticker, info in market_data.items():
+        current_price = info['price']
+        forecasts_query = collection.find(
+            {"marketData." + ticker: {"$exists": True}},
+            sort=[("_id", -1)],
+            projection={"marketData." + ticker: 1, "analyticsData": 1},
+        ).limit(30)
+
+        last_records = await forecasts_query.to_list(length=30)
+        correct_forecasts = 0
+        total_forecasts = 0
+
+        for record in last_records:
+            if record:
+                last_price = record['marketData'][ticker]['price']
+                last_forecast = record['analyticsData'].get(ticker, None)
+
+                # Считаем, сбылся ли прогноз
+                if last_forecast is not None:
+                    if (current_price > last_price and last_forecast > 50) or (
+                        current_price < last_price and last_forecast < 50
+                    ):
+                        correct_forecasts += 1
+                    total_forecasts += 1
+
+        # Сохраняем процент правильных прогнозов
+        if total_forecasts > 0:
+            forecast_accuracy = correct_forecasts / total_forecasts
+            forecast_results[ticker] = forecast_accuracy
+
+    return forecast_results

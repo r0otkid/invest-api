@@ -92,29 +92,32 @@ const refreshBalance = () => {
     });
 }
 
-const sendMarketData = () => {
+const sendMarketData = (sl, tp) => {
     fetchLatestTickerData().then(data => {
-        // Сбор аналитических данных
         const analyticsData = collectAnalyticsData();
 
-        // Объединение данных с аналитикой и данных о тикерах
         const payload = {
             marketData: data,
-            analyticsData: analyticsData
+            analyticsData: analyticsData,
         };
 
-        console.log('Отправка данных на сервер:', payload);
-
         $.ajax({
-            url: `/market-data`,
+            url: `/market-data?sl=${sl}&tp=${tp}`,
             type: 'POST',
             data: JSON.stringify(payload),
             contentType: 'application/json',
             success: function (response) {
-                console.log('Данные успешно отправлены:', response);
+                for (const [ticker, forecast] of Object.entries(response.forecast_results)) {
+                    const row = $(`#stock-${ticker}`);
+                    const forecastCell = row.find('td:eq(3)');
+                    const color = getForecastColor(forecast);
+                    forecastCell.css('background-color', color);
+                }
+                displayPredicate(response.predicate);
+                // displayStrategyResponse(response.strategy_response);
             },
             error: function (xhr, status, error) {
-                console.error("Произошла ошибка при отправке данных на сервер: " + error);
+                console.error("Ошибка при отправке данных на сервер: " + error);
             }
         });
     }).catch(error => {
@@ -127,7 +130,7 @@ const startBot = () => {
     const sendMarketDataWithInterval = () => {
         if (marketDataIntervalId) clearInterval(marketDataIntervalId);
         marketDataIntervalId = setInterval(() => {
-            sendMarketData();
+            sendMarketData($('#sl').val(), $('#tp').val());
         }, 5000);
     }
 
@@ -159,7 +162,17 @@ const startBot = () => {
                 start.css('background-color', 'orangered')
                 isBotStarted = true;
                 sendMarketDataWithInterval();
-                console.log('Торговый бот запущен');
+                getAllSecurities().then(securities => {
+                    securities.forEach(security => {
+                        const uid = security.instrument_uid;
+                        const balance = security.balance;
+                        $(`#securities-${uid}`).html(balance);
+                    });
+                    $('#current-state').html('Running...')
+                    console.log('Торговый бот запущен');
+                }).catch(error => {
+                    console.error('👺 Ошибка при загрузке бумаг:', error);
+                });
             }
         },
         error: (error) => {

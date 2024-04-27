@@ -2,7 +2,7 @@
 const updateExchangeTimer = () => {
     const now = new Date();
     const openingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 59, 0); // 9:00 утра
-    const closingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 45, 0); // 17:00 вечера
+    const closingTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 17, 40, 0); // 17:00 вечера
 
     let targetTime;
     let messagePrefix;

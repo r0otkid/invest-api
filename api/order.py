@@ -25,14 +25,14 @@ async def create_market_order(account_id: str, instrument_id: str, quantity: int
             return {"error": f"Order for {direction} was not executed", "details": order_response.message}
 
 
-async def buy_order_create(lots: dict, account_id: str, instrument_id: str, quantity: int) -> dict:
+async def buy_order_create(account_id: str, instrument_id: str, quantity: int) -> dict:
     """Создание рыночного ордера на покупку."""
-    return await create_market_order(lots, account_id, instrument_id, quantity, True)
+    return await create_market_order(account_id, instrument_id, quantity, True)
 
 
-async def sell_order_create(lots: dict, account_id: str, instrument_id: str, quantity: int) -> dict:
+async def sell_order_create(account_id: str, instrument_id: str, quantity: int) -> dict:
     """Создание рыночного ордера на продажу."""
-    return await create_market_order(lots, account_id, instrument_id, quantity, False)
+    return await create_market_order(account_id, instrument_id, quantity, False)
 
 
 async def get_all_orders(account_id: str) -> dict:

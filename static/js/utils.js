@@ -6,20 +6,10 @@ const createNewTableRow = (instrument, closePrice, ticker) => {
             <td id="securities-${instrument.uid}"></td>
             <td></td>
             <td>${ticker}</td>
-            <td><b>&nbsp;&nbsp;${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
+            <td style="text-align: center;"><b>&nbsp;&nbsp;${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
         </tr>`
     );
-    getAllSecurities().then(securities => {
-        securities.forEach(security => {
-            const uid = security.instrument_uid;
-            const balance = security.balance;
-            $(`#securities-${uid}`).html(balance);
-        });
-    }).catch(error => {
-        console.error('👺 Ошибка при загрузке бумаг:', error);
-    });
 }
-
 
 const getIconAndColor = (stockRow, closePrice) => {
     let icon = '&nbsp;&nbsp;';
@@ -94,8 +84,41 @@ const collectAnalyticsData = () => {
         const ticker = this.id.split('-')[1]; // ID имеет формат "stock-TICKER"
         const percentageString = $(this).find("td:eq(3)").text().trim(); // из четвертой колонки
         const percentage = parseFloat(percentageString.replace('%', ''));
-        analyticsData[ticker] = percentage;
+        analyticsData[ticker] = percentage || 50;  // 50% если данные не найдены
     });
 
     return analyticsData;
+}
+
+const getForecastColor = (value) => {
+    // Плавный переход от тёмно-красного к тёмно-зелёному
+    const hue = value * 120; // 0 (красный) - 120 (зелёный) в HSL
+    const saturation = 50 + (50 * value); // Увеличиваем насыщенность с ростом value
+    const lightness = 40; // Фиксированная яркость для менее ярких цветов
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+const displayPredicate = (predicates) => {
+    const $currentState = $('#current-state');
+    const actionablePredicates = predicates.filter(p => !p.includes('No clear action'));
+
+    // Если нет действенных предложений, показываем одно сообщение "No clear action"
+    if (actionablePredicates.length === 0 && predicates.length > 0) {
+        $currentState.html('No clear action').delay(500).fadeOut(500, () => {
+            $currentState.show().css('opacity', '');
+        });
+    } else if (actionablePredicates.length > 0) {
+        // Отображаем только те предложения, которые требуют действий
+        const formattedPredicates = actionablePredicates.join('<br>');
+        $currentState.html(formattedPredicates).delay(500).fadeOut(500, () => {
+            $currentState.show().css('opacity', '');
+        });
+        formattedPredicates.includes('Buy') && sendMessage(formattedPredicates.replace('<br>', '\n'));
+    } else {
+        // Если предложений нет, показываем пустое состояние или сообщение по умолчанию
+        $currentState.html('No data available').delay(500).fadeOut(500, () => {
+            $currentState.show().css('opacity', '');
+        });
+    }
 }

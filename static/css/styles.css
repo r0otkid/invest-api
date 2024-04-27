@@ -13,6 +13,12 @@ body {
     padding-left: 15px;
 }
 
+.tabs {
+    width: 88%;
+    margin-top: 20px;
+    margin: 0 auto;
+}
+
 .tab-links {
     display: none;
     list-style-type: none;
@@ -41,7 +47,7 @@ body {
 .btn {
     background-color: #4CAF50;
     text-align: center;
-    min-width: 140px;
+    min-width: 90px;
     border: none;
     color: white;
     padding: 6px 12px;
