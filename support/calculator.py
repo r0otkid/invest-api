@@ -5,6 +5,7 @@ from api.instrument import get_instrument_by_id
 
 class BalanceCalculator:
     def __init__(self, motor: AsyncIOMotorClient) -> None:
+        self.motor = motor
         self.db = motor.securities
 
     async def get_money(self) -> float:
@@ -25,8 +26,8 @@ class BalanceCalculator:
 
     async def get_lot_quantity(self, instrument_id: str) -> int:
         """Возвращает количество инструментов в лоте"""
-        instrument = await get_instrument_by_id(instrument_id, db=self.db)
-        return instrument.lot
+        instrument = await get_instrument_by_id(instrument_id, db=self.motor)
+        return instrument['lot'] if instrument else 0
 
     async def get_amount_for_buy(self, price: float, instrument_id: str) -> int:
         """Возвращает количество акций для покупки"""
@@ -41,14 +42,14 @@ class BalanceCalculator:
 
     async def get_amount_for_sell(self, instrument_id: str, stop_loss_take_profit: bool = False) -> int:
         """Возвращает количество акций для продажи"""
-        instrument = await get_instrument_by_id(instrument_id, db=self.db)
+        instrument = await get_instrument_by_id(instrument_id, db=self.motor)
         securities_object = await self.db.find_one({})
         securities = securities_object.get('securities', []) if securities_object else []
         amount_for_sell = 0
         for security in securities:
             if security['instrument_uid'] == instrument_id:
                 balance = security['balance']
-                lot = instrument.lot
+                lot = instrument['lot']
                 if not stop_loss_take_profit:
                     amount_for_sell = min(balance // lot // 3, int(balance // lot // 3))
                     if not amount_for_sell:

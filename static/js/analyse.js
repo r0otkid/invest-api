@@ -324,9 +324,9 @@ function calculateProbabilityOfGrowth(ticker) {
                 weightedSum += (regression.slope > 0) * weights.regression;
                 weightedSum += (Math.abs(cusum[cusum.length - 1]) > threshold) * (cusum[cusum.length - 1] > 0 ? weights.cusum : -weights.cusum);
                 weightedSum += (autocorrelation > 0.5) * weights.autocorrelation;
-                weightedSum += (shapiroWilk < someThreshold) * weights.shapiroWilk;
+                weightedSum += (shapiroWilk < 0.95) * weights.shapiroWilk;
                 weightedSum += (spearman > 0.5) * weights.spearman;
-                weightedSum += (dickeyFuller < criticalValue) * weights.dickeyFuller;
+                weightedSum += (dickeyFuller < -2.89) * weights.dickeyFuller;
 
                 // Суммируем все веса
                 Object.values(weights).forEach(weight => weightTotal += weight);

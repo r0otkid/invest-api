@@ -77,11 +77,11 @@ class TradingStrategy:
             rsi = self.calculate_rsi(prices, period=10)
 
             if sma is not None and ema is not None:
-                if (current_price > ema and current_price > sma and forecast_prob > 0.5) and (
+                if (current_price > ema and current_price > sma and forecast_prob > 0.4) and (
                     rsi is not None and rsi < 30
                 ):
                     messages.append(f"📈 BUY {ticker} - Good forecast")
-                elif (current_price < ema and current_price < sma and forecast_prob < 0.5) and (
+                elif (current_price < ema and current_price < sma and forecast_prob > 0.5) and (
                     rsi is not None and rsi > 70
                 ):
                     messages.append(f"📉 SELL {ticker} - Low forecast")

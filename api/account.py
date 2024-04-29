@@ -43,10 +43,6 @@ async def get_account_positions(account_id: str, money_only=True) -> list:
             result = await cli.operations.get_positions(account_id=account_id)
             return result.money if money_only else result
 
-        # with SandboxClient(TOKEN) as cli:
-        #     result = cli.operations.get_positions(account_id=account_id)
-        #     return result.money if money_only else result
-
 
 async def get_info() -> dict:
     async with AsyncClient(TOKEN, target=TARGET) as client:
@@ -63,7 +59,10 @@ async def get_info() -> dict:
 async def get_balance(account_id: str) -> float:
     if account_id:
         positions = await get_account_positions(account_id=account_id)
-        balance = float(quotation_to_decimal(positions[0]))
+        if positions:
+            balance = float(quotation_to_decimal(positions[0]))
+        else:
+            balance = float(0)
     else:
         balance = float(0)
     return balance

@@ -32,16 +32,15 @@ routes = web.RouteTableDef()
 
 INSTRUMENTS = [
     "BBG004730N88",  # SBER
-    "BBG00475K2X9",  # HYDR
+    # "BBG00475K2X9",  # HYDR
     "BBG004S68473",  # IRAO
     "BBG004730ZJ9",  # VTBR
     # "TCS00A107RM8",  # ZAYMER
     "BBG004731489",  # GMKN
     "TCS00A105EX7",
-    "BBG333333333",  # фонды
-    "TCS10A101X50",
-    "TCS00A107597",
-    # "BBG000LNHHJ9",  # KAMAZ
+    # "BBG333333333",  # фонды
+    # "TCS10A101X50",
+    # "TCS00A107597",
 ]
 
 
@@ -141,7 +140,7 @@ async def close_all_sanbox_acc_handler(request):
 @routes.get("/add-money")
 async def add_money_handler(request) -> Optional[int]:
     account_id = request.query.get("account_id")
-    money = request.query.get("money", 6000)
+    money = request.query.get("money", 10000)
 
     if not account_id:
         account_id = await get_account_id(accounts=await get_accounts())

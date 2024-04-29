@@ -26,6 +26,27 @@ const getIconAndColor = (stockRow, closePrice) => {
     return { icon: icon, color: color };
 }
 
+function calculateAveragePrices(orders) {
+    let buyOrders = orders.filter(order => order.order_type === "buy");
+    let averagePrices = {};
+
+    buyOrders.forEach(order => {
+        console.log(order)
+        let instrument_uid = order.instrument_uid;
+        if (!averagePrices[instrument_uid]) {
+            averagePrices[instrument_uid] = { sum: 0, count: 0 };
+        }
+        averagePrices[instrument_uid].sum += order.price;
+        averagePrices[instrument_uid].count++;
+    });
+
+    for (let instrument_uid in averagePrices) {
+        averagePrices[instrument_uid] = averagePrices[instrument_uid].sum / averagePrices[instrument_uid].count;
+    }
+
+    return averagePrices;
+}
+
 const updateExistingRow = (instrument, stockRow, closePrice) => {
     const { icon, color } = getIconAndColor(stockRow, closePrice);
     selectBestTradingOptions().then(

@@ -1,6 +1,8 @@
 import json
+from tinkoff.invest.exceptions import RequestError
 from dataclasses import asdict
 from datetime import datetime
+import logging
 
 
 def serializer(val):
@@ -30,8 +32,12 @@ def money_value_to_rub(money_value):
 
 async def get_instruments(instrument_list, find_function) -> list:
     instruments = []
-    for instrument in instrument_list:
-        instruments = [*instruments, *await find_function(instrument)]
+    try:
+        for instrument in instrument_list:
+            instruments = [*instruments, *await find_function(instrument)]
+    except RequestError as e:
+        logging.warning('Не получается получить инструменты')
+        logging.error(e)
     return instruments
 
 

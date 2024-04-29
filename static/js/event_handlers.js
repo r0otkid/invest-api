@@ -1,6 +1,7 @@
 $('#start').on('click', () => {
     currentState.html('Загрузка...').css('color', 'darkseagreen');
     startBot();
+    loadOrders();
 })
 
 $(document).on('click', `[id^='stock-']`, function () {

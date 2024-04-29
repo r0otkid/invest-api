@@ -1,4 +1,3 @@
-
 const closeAllAccounts = () => {
     $.ajax({
         url: '/close-all-sandbox-accounts',
@@ -128,7 +127,7 @@ const sendMarketData = (sl, tp) => {
                     forecastCell.css('background-color', color);
                 }
                 displayPredicate(response.predicate);
-
+                loadOrders();
             },
             error: function (xhr, status, error) {
                 console.error("Ошибка при отправке данных на сервер: " + error);
@@ -197,104 +196,39 @@ const startBot = () => {
     });
 }
 
-const loadDiagrams = () => {
+
+const loadOrders = () => {
     $.ajax({
         url: "/buy-sell-orders",
         type: "GET",
         success: function (orders) {
-            const data = processOrders(orders);
-            drawCharts(data);
+            const averagePrices = calculateAveragePrices(orders);
+
+            $('#orders-table tbody').empty();
+
+            orders.forEach(order => {
+                const quantity = order.lots * order.instrument?.lot;
+                let profit = 0;
+                if (order.order_type === 'sell') {
+                    let avgPrice = averagePrices[order.instrument_uid] || 0;
+                    profit = (order.price - avgPrice) * quantity;
+                    profit = profit.toFixed(2); // Форматирование значения до двух десятичных знаков
+                }
+
+                $('#orders-table tbody').append(`
+                    <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : 'orangered'}">
+                        <td>${order.instrument.figi}</td>
+                        <td>${order.instrument.ticker}</td>
+                        <td>${order.price}</td>
+                        <td>${order.order_type}</td>
+                        <td>${quantity}</td>
+                        <td>${profit}</td>
+                    </tr>
+                `);
+            });
         },
         error: function (error) {
             console.log("Error fetching orders:", error);
         }
     });
-
-    function processOrders(orders) {
-        const results = {
-            buy: 0,
-            sell: 0,
-            tickers: {}
-        };
-        const prices = {};
-
-        orders.forEach(order => {
-            // Подсчет buy и sell
-            if (order.order_type === "buy") {
-                results.buy += 1;
-                if (!prices[order.instrument.uid]) {
-                    prices[order.instrument.uid] = {};
-                }
-                prices[order.instrument.uid].buy = order.price;
-            } else if (order.order_type === "sell") {
-                results.sell += 1;
-                if (!prices[order.instrument.uid]) {
-                    prices[order.instrument.uid] = {};
-                }
-                prices[order.instrument.uid].sell = order.price;
-            }
-
-            // Подсчет операций по тикерам
-            const ticker = order.instrument.ticker; // доступ к тикеру через инструмент
-            if (results.tickers[ticker]) {
-                results.tickers[ticker] += 1;
-            } else {
-                results.tickers[ticker] = 1;
-            }
-        });
-
-        return results;
-    }
-
-    function drawCharts(data) {
-        const ctxBuySell = document.getElementById('buySellChart').getContext('2d');
-
-        new Chart(ctxBuySell, {
-            type: 'bar',
-            data: {
-                labels: ['Buy', 'Sell'],
-                datasets: [{
-                    label: 'Buy vs Sell Orders',
-                    data: [data.buy, data.sell],
-                    backgroundColor: ['rgba(54, 112, 235, 0.6)', 'rgba(255, 112, 132, 0.6)'],
-                    borderColor: ['rgba(54, 112, 235, 1)', 'rgba(255, 112, 132, 1)'],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                }
-            }
-        });
-        // диаграмма: по тикерам
-        const ctxTicker = document.getElementById('tickerChart').getContext('2d');
-        const tickerLabels = Object.keys(data.tickers);
-        const tickerData = Object.values(data.tickers);
-
-        new Chart(ctxTicker, {
-            type: 'bar',
-            data: {
-                labels: tickerLabels,
-                datasets: [{
-                    label: 'Operations by Ticker',
-                    data: tickerData,
-                    backgroundColor: tickerLabels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`),
-                    borderColor: tickerLabels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`),
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                    }
-                }
-            }
-        });
-    }
 }

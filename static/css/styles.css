@@ -95,7 +95,7 @@ body {
 .stock-widget th, .stock-widget td {
     padding: 8px;
     text-align: left;
-    border-radius: 4px;
+    border-radius: 1px;
     border: 1px solid #333;
     transition: transform 0.3s ease;
 }
@@ -105,7 +105,9 @@ body {
 }
 
 .stock-widget th:last-child, .stock-widget td:last-child {
-    width: 15%;
+    width: 10%;
+    text-align: right !important;
+
 }
 
 
@@ -115,7 +117,6 @@ body {
 }
 
 .stock-widget th:nth-child(4), .stock-widget td:nth-child(4) {
-    width: 20%;
     text-align: right;
 }
 
@@ -259,6 +260,7 @@ body {
 
 #orders {
     display: flex;
+    overflow-y: scroll;
     justify-content: space-between;
     width: 100%;
     margin-left: 10px;
@@ -269,4 +271,28 @@ body {
     height: 153px;
     border-radius: 1px;
     color: seagreen;
+}
+
+/* Стилизация скроллбара */
+#orders::-webkit-scrollbar {
+    width: 8px; /* ширина скроллбара */
+}
+
+#orders::-webkit-scrollbar-track {
+    background: #2b2b2b; /* цвет дорожки скроллбара */
+}
+
+#orders::-webkit-scrollbar-thumb {
+    background-color: #555; /* цвет ползунка скроллбара */
+    border-radius: 10px; /* скругление углов ползунка */
+    border: 2px solid #2b2b2b; /* рамка ползунка */
+}
+
+
+#orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: silver;
+    border: 1px solid #35413a;
+    text-align: center;
 }

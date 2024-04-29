@@ -6,7 +6,7 @@ from utils import convert_to_json
 
 
 async def get_instrument_by_id(instrument_id: str, db=None):
-    if not db:
+    if db is None:
         with Cli(TOKEN) as cli:
             response = cli.instruments.get_instrument_by(id=instrument_id, id_type=InstrumentIdType(3))  # uid
             result = response.instrument

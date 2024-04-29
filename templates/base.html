@@ -29,7 +29,7 @@
           <thead>
             <tr>
               <th></th>
-              <th>FIGI</th>
+              <th>Name</th>
               <th>Securities</th>
               <th>Analytics</th>
               <th>Ticker</th>
@@ -61,8 +61,19 @@
         <span id="current-state"></span>
       </div>
       <div id="orders">
-        <canvas id="buySellChart"></canvas>
-        <canvas id="tickerChart"></canvas>
+        <table id="orders-table">
+          <thead>
+            <tr>
+              <th>FIGI</th>
+              <th>Ticker</th>
+              <th>Price</th>
+              <th>Operation</th>
+              <th>Quantity</th>
+              <th>Profit</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
       </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -144,14 +155,11 @@
           $('#start').css('display', 'none');
 
           balance.click(() => refreshBalance());
-          $(document).ready(function() {
-            setInterval(refreshBalance, 60000);
-          });
-          $(document).ready(function() {
-            setInterval(refreshSecurities, 60000);
-          });                    
+          
+          setInterval(refreshBalance, 10000);
+          setInterval(refreshSecurities, 10000);
+
           $('#generate-data').click(() => generateData() && window.location.reload());
-          loadDiagrams();
           loadSecurities();
         })
     </script>
