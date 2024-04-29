@@ -1,4 +1,3 @@
-import json
 import motor.motor_asyncio
 import os
 from typing import Optional
@@ -16,9 +15,9 @@ from api.account import (
     get_info,
     open_sandbox_account,
 )
-from api.instrument import find_instruments, get_instrument_by_id
+from api.instrument import find_instruments, get_instrument_by_id, get_trading_status
 from settings import BOT_TOKEN, TOKEN, ROOT_ID
-from api.order import get_all_orders
+from api.order import buy_order_create, get_all_orders, sell_order_create
 from strategy.strategy2 import TradingStrategy
 from support.calculator import BalanceCalculator
 from support.executor import TradeExecutor
@@ -32,15 +31,30 @@ routes = web.RouteTableDef()
 
 
 INSTRUMENTS = [
-    "BBG004730ZJ9",
-    # "TCS00A107RM8",
-    "BBG004731489",
+    "BBG004730N88",  # SBER
+    "BBG00475K2X9",  # HYDR
+    "BBG004S68473",  # IRAO
+    "BBG004730ZJ9",  # VTBR
+    # "TCS00A107RM8",  # ZAYMER
+    "BBG004731489",  # GMKN
     "TCS00A105EX7",
     "BBG333333333",  # фонды
     "TCS10A101X50",
     "TCS00A107597",
-    # "BBG000LNHHJ9",
+    # "BBG000LNHHJ9",  # KAMAZ
 ]
+
+
+async def create_order(account_id, amount, instrument_id, order_type):
+    """Общая функция для создания рыночного ордера на покупку или продажу."""
+    if not instrument_id:
+        return web.json_response({"error": "Instrument ID is required"})
+
+    if order_type == "buy":
+        response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
+    else:
+        response = await sell_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
+    return web.json_response(response)
 
 
 @routes.get("/")
@@ -48,6 +62,10 @@ async def root(request):
     instruments = await get_instruments(instrument_list=INSTRUMENTS, find_function=find_instruments)
     account_id = await get_account_id(accounts=await get_accounts())  # get it from api only first time
     balance = await get_balance(account_id=account_id)
+
+    for i in instruments:
+        instrument = await get_instrument_by_id(i['uid'])
+        i['lot'] = instrument.lot
 
     # сохраняем аккаунт в базу
     await db.account.delete_many({})
@@ -94,39 +112,10 @@ async def marketData(request):
     strategy = TradingStrategy(db, balance, sl, tp, forecast_results, new_data)
     predicates = await strategy.make_predicate()
 
-    executor = TradeExecutor(db=db, calculator=calculator)
-    await executor.execute_trades(predicates=predicates, market_data=new_data['marketData'])
+    executor = TradeExecutor(db=db, calculator=calculator, sl=sl, tp=tp)
+    await executor.execute_trades(predicates=predicates, market_data=new_data['marketData'], create_order=create_order)
+
     return web.json_response({'forecast_results': forecast_results, 'predicate': predicates})
-
-    # try:
-    #    new_data = await request.json()
-    #    sl = float(request.query.get('sl', '0.1'))
-    #    tp = float(request.query.get('tp', '0.15'))
-
-    #     forecast_results = await process_forecast(collection, new_data)
-    #     await collection.insert_one(new_data)
-    #     balance = await get_balance()
-    #     strategy = TradingStrategy(db, forecast_results, sl, tp, balance)
-    #     strategy.balance = balance
-    #     strategy_response = {}
-    #     for id_object in [{'ticker': i['ticker'], "uid": i["uid"]} for i in await get_instruments_cached()]:
-    #         response = await strategy.evaluate(id_object['ticker'], id_object['uid'])
-    #         lots, strategy_response[id_object['ticker']] = response
-    #         if '📉' in response:
-    #             if balance > strategy.lots * strategy.price:
-    #                 account_id = await get_account_id(accounts=await get_accounts())
-    #                 logging.error()
-    #                 await create_order(account_id, lots, id_object['uid'], "buy")
-    #                 break
-    #         if '📈' in response:
-    #             account_id = await get_account_id(accounts=await get_accounts())
-    #             if lots:
-    #                 await create_order(account_id, lots, id_object['uid'], "sell")
-    #                 break
-
-    #     return web.json_response({'forecast_results': forecast_results, 'strategy_response': strategy_response})
-    # except Exception as e:
-    #     return web.json_response({'message': str(e)}, status=500)
 
 
 @routes.get("/accounts")
@@ -137,18 +126,22 @@ async def accounts_handler(request):
 
 @routes.get("/open-sandbox-account")
 async def open_sanbox_acc_handler(request):
-    return web.json_response(await open_sandbox_account())
+    await db.account.delete_many({})
+    account_id = await open_sandbox_account()
+    await db.account.insert_one({'account_id': account_id})
+    return web.json_response(account_id)
 
 
 @routes.get("/close-all-sandbox-accounts")
 async def close_all_sanbox_acc_handler(request):
+    await db.account.delete_many({})
     return web.json_response(await close_all_sanbox_accounts())
 
 
 @routes.get("/add-money")
 async def add_money_handler(request) -> Optional[int]:
     account_id = request.query.get("account_id")
-    money = request.query.get("money", 10000)
+    money = request.query.get("money", 6000)
 
     if not account_id:
         account_id = await get_account_id(accounts=await get_accounts())
@@ -176,6 +169,29 @@ async def instrument_handler(request):
     return web.json_response(await find_instruments(search_string=search_string))
 
 
+@routes.get("/instrument-by-id")
+async def instrument_handler(request):
+    instrument_id = request.query.get("id")
+    instrument = await get_instrument_by_id(instrument_id)
+    return web.json_response(
+        {
+            'api_trade_available_flag': instrument.api_trade_available_flag,
+            'buy_available_flag': instrument.buy_available_flag,
+            'country_of_risk': instrument.country_of_risk,
+            'currency': instrument.currency,
+            'figi': instrument.figi,
+            'for_qual_investor_flag': instrument.for_qual_investor_flag,
+            'instrument_type': instrument.instrument_type,
+            'lot': instrument.lot,
+            'name': instrument.name,
+            'position_uid': instrument.position_uid,
+            'ticker': instrument.ticker,
+            'uid': instrument.uid,
+            'weekend_flag': instrument.weekend_flag,
+        }
+    )
+
+
 @routes.get("/get-lot-quantity")
 async def get_lot_quantity_handler(request):
     instrument_id = request.query.get("id", '')
@@ -187,6 +203,30 @@ async def get_lot_quantity_handler(request):
 async def orders_list_handler(request):
     account_id = await get_account_id(accounts=await get_accounts())
     return web.json_response(await get_all_orders(account_id=account_id))
+
+
+@routes.get("/create-order")
+async def create_order_handler(request):
+    account_id = await get_account_id(accounts=await get_accounts())
+    amount = request.query.get("amount", 1)
+    instrument_id = request.query.get("instrument_id")
+    instrument = await get_instrument_by_id(instrument_id)
+    order_type = request.query.get("order_type")
+    is_market_order_available, is_api_trade_available = await get_trading_status(figi=instrument.figi)
+    if is_api_trade_available and is_market_order_available:
+        order = await create_order(
+            account_id=account_id, amount=int(amount), instrument_id=instrument_id, order_type=order_type
+        )
+        return web.json_response({'order_id': order.uid})
+    return web.json_response(
+        {
+            'error': f'Trading is not available for `{instrument.name}` instrument.',
+            'details': {
+                'is_api_trade_available': is_api_trade_available,
+                'is_market_order_available': is_market_order_available,
+            },
+        }
+    )
 
 
 @routes.get("/all-securities")
@@ -208,6 +248,40 @@ async def get_all_securities_handler(request):
     ]
     await db.securities.update_one({}, {"$set": {"securities": securities}})
     return web.json_response({"securities": securities})
+
+
+@routes.get("/get-securities")
+async def get_securities_handler(request):
+    security = await db.securities.find_one({})
+    instruments = await db.instruments.find({}).to_list(length=1000)
+    securities = security.get('securities', []) if security else []
+    prices = []
+    for security in securities:
+        order = await db.orders.find_one({'instrument_uid': security['instrument_uid'], 'order_type': 'buy'})
+        price = order['price'] if order else 0
+        prices.append(price)
+        instrument = next((i for i in instruments if i['uid'] == security['instrument_uid']), None)
+        if instrument and '_id' in instrument:
+            del instrument['_id']
+        security['instrument'] = instrument
+        if '_id' in security:
+            del security['_id']
+    return web.json_response({"securities": securities, 'prices': prices})
+
+
+@routes.get("/buy-sell-orders")
+async def get_buy_sell_orders_handler(request):
+    orders = await db.orders.find({}).to_list(length=1000)
+    instruments = await db.instruments.find({}).to_list(length=1000)
+    for order in orders:
+        instrument = next((i for i in instruments if i['uid'] == order['instrument_uid']), None)
+        if '_id' in order:  # todo: make serializer
+            del order['_id']
+        if instrument:
+            if '_id' in instrument:
+                del instrument['_id']
+            order['instrument'] = instrument
+    return web.json_response(orders)
 
 
 app = web.Application()

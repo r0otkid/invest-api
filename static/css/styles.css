@@ -2,6 +2,16 @@ body {
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); 
 }
 
+.information {
+    display: flex;
+    justify-content: center;
+    margin: 3px;
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    color: #fff;
+    padding: 5px;
+    padding-left: 15px;
+}
+
 .toolbox {
     display: flex;
     align-items: center;
@@ -14,9 +24,7 @@ body {
 }
 
 .tabs {
-    width: 88%;
-    margin-top: 20px;
-    margin: 0 auto;
+    width: 65%;
 }
 
 .tab-links {
@@ -121,7 +129,8 @@ body {
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
     color: #abb2bf; /* светлый текст */
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 1px;
+    width: 33%;
 }
 
 .orders label {
@@ -150,6 +159,12 @@ body {
     border: 2px solid #61afef; /* подсветка при фокусе */
 }
 
+.stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
 .red, .stock-widget tr.red:hover {
     background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */
     transition: background-color 0.3s ease, transform 0.3s ease;
@@ -165,6 +180,15 @@ body {
 
 }
 
+.yellow {
+    background-color: goldenrod;
+}
+
+.yellow:hover {
+    background-color: darkgoldenrod;
+}
+
+
 #balance {
     font-weight: bolder;
     font-size: 12pt;
@@ -173,7 +197,7 @@ body {
 
 #exchange-timer {
     padding: 5px 10px;
-    background: linear-gradient(to right, #6a11cb, #2575fc); /* Градиентный фон */
+    background: linear-gradient(to right, #240644, #09214a); /* Градиентный фон */
     color: white;
     font-size: 18px;
     font-weight: bold;
@@ -197,9 +221,52 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    color: #ffffff;
+    padding: 5px 7px;
+    font-family: 'Courier New', Courier, monospace;
+    border: 1px solid #343030;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 1px; /* Скругление углов */
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.7); /* Светящийся текст */
+    transition: all 0.3s ease; /* Плавный переход состояний */
+    height: 155px;
+    width: 35%;
+}
+
+#state-bar:hover {
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Увеличенная тень при наведении */
+    transform: translateY(-1px); /* Подъем компонента при наведении */
+    cursor: text;
 }
 
 #current-state {
+    width: 100%;
+    min-height: 100%;
+    opacity: 0.9;
+    padding: 3px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     color: dodgerblue;
+}
+
+#order {
+    width: 100%;
+    color: #797979;
+    height: 100%;
+    padding: 3px;
+    margin-top: 1px;
+    margin-left: 20px;
+}
+
+#orders {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-left: 10px;
+    font-family: monospace;
+    margin-left: 10px;
+    border: 1px solid #35413a;
+    padding: 6px;
+    height: 153px;
+    border-radius: 1px;
+    color: seagreen;
 }

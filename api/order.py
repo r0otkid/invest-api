@@ -11,14 +11,21 @@ async def create_market_order(account_id: str, instrument_id: str, quantity: int
     direction = OrderDirection.ORDER_DIRECTION_BUY if is_buy else OrderDirection.ORDER_DIRECTION_SELL
 
     async with AsyncClient(TOKEN, target=TARGET) as client:
-        order_response = await client.orders.post_order(
-            quantity=quantity,
-            direction=direction,
-            account_id=account_id,
-            order_type=OrderType.ORDER_TYPE_MARKET,
-            order_id=str(uuid.uuid4()),
-            instrument_id=instrument_id,
-        )
+        try:
+            order_response = await client.orders.post_order(
+                quantity=quantity,
+                direction=direction,
+                account_id=account_id,
+                order_type=OrderType.ORDER_TYPE_MARKET,
+                order_id=str(uuid.uuid4()),
+                instrument_id=instrument_id,
+            )
+        except Exception as e:
+            logging.warning(
+                f"Quantity: {quantity}, direction: {direction}, account_id: {account_id}, instrument_id: {instrument_id}"
+            )
+            logging.error(f"Error while creating order: {e}")
+            return {"error": str(e)}
         if order_response.execution_report_status == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL:
             return {"message": f"Order for {direction} was executed successfully, order_id: {order_response.order_id}"}
         else:

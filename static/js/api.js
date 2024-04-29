@@ -92,6 +92,20 @@ const refreshBalance = () => {
     });
 }
 
+
+const refreshSecurities = () => {
+    getAllSecurities().then(securities => {
+        securities.forEach(security => {
+            const uid = security.instrument_uid;
+            const balance = security.balance;
+            $(`#securities-${uid}`).html(balance);
+        });
+    }).catch(error => {
+        console.error('👺 Ошибка при загрузке бумаг:', error);
+    })
+}
+
+
 const sendMarketData = (sl, tp) => {
     fetchLatestTickerData().then(data => {
         const analyticsData = collectAnalyticsData();
@@ -114,7 +128,7 @@ const sendMarketData = (sl, tp) => {
                     forecastCell.css('background-color', color);
                 }
                 displayPredicate(response.predicate);
-                // displayStrategyResponse(response.strategy_response);
+
             },
             error: function (xhr, status, error) {
                 console.error("Ошибка при отправке данных на сервер: " + error);
@@ -125,28 +139,30 @@ const sendMarketData = (sl, tp) => {
     });
 }
 
-const startBot = () => {
-    // Установка и удаление интервала отправки данных на сервер
-    const sendMarketDataWithInterval = () => {
-        if (marketDataIntervalId) clearInterval(marketDataIntervalId);
-        marketDataIntervalId = setInterval(() => {
-            sendMarketData($('#sl').val(), $('#tp').val());
-        }, 5000);
-    }
-
-    const stopSendingMarketData = () => {
-        if (marketDataIntervalId) {
-            clearInterval(marketDataIntervalId);
-            marketDataIntervalId = null;
-            console.log("Отправка данных на сервер остановлена.");
+const loadSecurities = () => {
+    $.ajax({
+        url: '/get-securities',
+        type: 'GET',
+        success: (response) => {
+            const securities = response.securities;
+            securities.forEach(security => {
+                $(`#securities-${security.instrument_uid}`).html(security.balance);
+            })
+        },
+        error: (error) => {
+            console.error('👺 Ошибка при загрузке бумаг:', error);
         }
-    }
+    });
 
+}
+
+const startBot = () => {
     $.ajax({
         url: '/start',
         type: 'GET',
         success: (response) => {
             const statusIcon = $('#status');
+            const start = $('#start');
             // ОСТАНОВКА БОТА
             if (start.html() === 'Stop Bot') {
                 statusIcon.removeClass('green').addClass('red')
@@ -168,15 +184,117 @@ const startBot = () => {
                         const balance = security.balance;
                         $(`#securities-${uid}`).html(balance);
                     });
-                    $('#current-state').html('Running...')
-                    console.log('Торговый бот запущен');
                 }).catch(error => {
                     console.error('👺 Ошибка при загрузке бумаг:', error);
-                });
+                })
+                $('#current-state').html('Running...')
+                console.log('Торговый бот запущен');
             }
         },
         error: (error) => {
             console.log(error);
         }
     });
+}
+
+const loadDiagrams = () => {
+    $.ajax({
+        url: "/buy-sell-orders",
+        type: "GET",
+        success: function (orders) {
+            const data = processOrders(orders);
+            drawCharts(data);
+        },
+        error: function (error) {
+            console.log("Error fetching orders:", error);
+        }
+    });
+
+    function processOrders(orders) {
+        const results = {
+            buy: 0,
+            sell: 0,
+            tickers: {}
+        };
+        const prices = {};
+
+        orders.forEach(order => {
+            // Подсчет buy и sell
+            if (order.order_type === "buy") {
+                results.buy += 1;
+                if (!prices[order.instrument.uid]) {
+                    prices[order.instrument.uid] = {};
+                }
+                prices[order.instrument.uid].buy = order.price;
+            } else if (order.order_type === "sell") {
+                results.sell += 1;
+                if (!prices[order.instrument.uid]) {
+                    prices[order.instrument.uid] = {};
+                }
+                prices[order.instrument.uid].sell = order.price;
+            }
+
+            // Подсчет операций по тикерам
+            const ticker = order.instrument.ticker; // доступ к тикеру через инструмент
+            if (results.tickers[ticker]) {
+                results.tickers[ticker] += 1;
+            } else {
+                results.tickers[ticker] = 1;
+            }
+        });
+
+        return results;
+    }
+
+    function drawCharts(data) {
+        const ctxBuySell = document.getElementById('buySellChart').getContext('2d');
+
+        new Chart(ctxBuySell, {
+            type: 'bar',
+            data: {
+                labels: ['Buy', 'Sell'],
+                datasets: [{
+                    label: 'Buy vs Sell Orders',
+                    data: [data.buy, data.sell],
+                    backgroundColor: ['rgba(54, 112, 235, 0.6)', 'rgba(255, 112, 132, 0.6)'],
+                    borderColor: ['rgba(54, 112, 235, 1)', 'rgba(255, 112, 132, 1)'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+        // диаграмма: по тикерам
+        const ctxTicker = document.getElementById('tickerChart').getContext('2d');
+        const tickerLabels = Object.keys(data.tickers);
+        const tickerData = Object.values(data.tickers);
+
+        new Chart(ctxTicker, {
+            type: 'bar',
+            data: {
+                labels: tickerLabels,
+                datasets: [{
+                    label: 'Operations by Ticker',
+                    data: tickerData,
+                    backgroundColor: tickerLabels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.6)`),
+                    borderColor: tickerLabels.map(() => `rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 1)`),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+    }
 }

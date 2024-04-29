@@ -5,11 +5,21 @@ from settings import TOKEN
 from utils import convert_to_json
 
 
-async def get_instrument_by_id(instrument_id: str):
-    with Cli(TOKEN) as cli:
-        response = cli.instruments.get_instrument_by(id=instrument_id, id_type=InstrumentIdType(3))  # uid
-        result = response.instrument
+async def get_instrument_by_id(instrument_id: str, db=None):
+    if not db:
+        with Cli(TOKEN) as cli:
+            response = cli.instruments.get_instrument_by(id=instrument_id, id_type=InstrumentIdType(3))  # uid
+            result = response.instrument
+            return result
+    else:
+        result = await db.instruments.find_one({"uid": instrument_id})
         return result
+
+
+async def get_trading_status(figi: str) -> tuple:
+    with Cli(TOKEN) as cli:
+        trading_status = cli.market_data.get_trading_status(figi=figi)
+        return trading_status.market_order_available_flag, trading_status.api_trade_available_flag
 
 
 async def find_instruments(search_string: str = '') -> list:

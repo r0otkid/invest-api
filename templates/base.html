@@ -20,6 +20,7 @@
           <button class="btn" id="delete-acc">🔨 Удалить</button>
           <button class="btn" id="open-acc">🚀 Открыть</button>
           <button class="btn" id="add-money">💰 Пополнить</button>
+          <button class="btn yellow" id="generate-data">🌪 Заполнить</button>
         </div>
         <div id="exchange-timer">Загрузка времени...</div>
       </div>
@@ -41,21 +42,28 @@
         </table>
       </div>
     </div>
-    <div class="tabs">
-      <ul class="tab-links"></ul>
-      <div class="tab-content"></div>
+    <div class="information">
+      <div class="tabs">
+        <ul class="tab-links"></ul>
+        <div class="tab-content"></div>
+      </div>
+      <div class="orders">
+        <label for="sl">Stop Loss</label>
+        <input type="number" id="sl" value="0.25" placeholder="%" />
+        <label for="tp">Take Profit</label>
+        <input type="number" id="tp" value="0.15" placeholder="%" />
+        <br /><br />
+        <button style="float: right; margin-top: 50px;" class="btn blue" id="start">Start Bot</button>
+      </div>
     </div>
-    <div class="orders">
-      <label for="sl">Stop Loss</label>
-      <input type="number" id="sl" value="0.25" placeholder="%" />
-      <label for="tp">Take Profit</label>
-      <input type="number" id="tp" value="0.45" placeholder="%" />
+    <div class="stats">
       <div id="state-bar">
         <span id="current-state"></span>
-        <button style="float: right;" class="btn blue" id="start">Start Bot</button>
       </div>
-      <br />
-      <br />
+      <div id="orders">
+        <canvas id="buySellChart"></canvas>
+        <canvas id="tickerChart"></canvas>
+      </div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
@@ -73,7 +81,6 @@
       const figiList = {{ figi_list|tojson }};
       const chartInstances = {};
 
-      const start = $('#start');
       const balance = $("#balance");
       const currentState =  $('current-state');
 
@@ -89,6 +96,23 @@
         }
       }
       const intervalId = setInterval(checkRowsAndShowButton, 1000)
+
+      // Установка и удаление интервала отправки данных на сервер
+      const sendMarketDataWithInterval = () => {
+        if (marketDataIntervalId) clearInterval(marketDataIntervalId);
+        marketDataIntervalId = setInterval(() => {
+            sendMarketData($('#sl').val(), $('#tp').val());
+            loadSecurities();
+        }, 10000);
+      }
+
+      const stopSendingMarketData = () => {
+          if (marketDataIntervalId) {
+              clearInterval(marketDataIntervalId);
+              marketDataIntervalId = null;
+              console.log("Отправка данных на сервер остановлена.");
+          }
+      }
     </script>
 
     <script src="/static/js/db.js"></script>
@@ -117,9 +141,18 @@
           });
 
           balance.css('cursor', 'pointer');
-          start.css('display', 'none');
+          $('#start').css('display', 'none');
 
           balance.click(() => refreshBalance());
+          $(document).ready(function() {
+            setInterval(refreshBalance, 60000);
+          });
+          $(document).ready(function() {
+            setInterval(refreshSecurities, 60000);
+          });                    
+          $('#generate-data').click(() => generateData() && window.location.reload());
+          loadDiagrams();
+          loadSecurities();
         })
     </script>
   </body>

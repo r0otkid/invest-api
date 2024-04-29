@@ -1,3 +1,29 @@
+function erfinv(x) {
+    var z;
+    var a = 0.147;
+    var the_sign_of_x;
+    if (x == 0) {
+        the_sign_of_x = 0;
+    } else if (x > 0) {
+        the_sign_of_x = 1;
+    } else {
+        the_sign_of_x = -1;
+    }
+
+    if (x != 0) {
+        var ln_1minus_x_sqrd = Math.log(1 - x * x);
+        var ln_1minusxx_by_a = ln_1minus_x_sqrd / a;
+        var ln_1minusxx_by_2 = ln_1minus_x_sqrd / 2;
+        var ln_etc_by2_plus2 = ln_1minusxx_by_2 + (2 / (Math.PI * a));
+        var first_sqrt = Math.sqrt((ln_etc_by2_plus2 * ln_etc_by2_plus2) - ln_1minusxx_by_a);
+        var second_sqrt = Math.sqrt(first_sqrt - ln_etc_by2_plus2);
+        z = second_sqrt * the_sign_of_x;
+    } else { // если x == 0
+        z = 0;
+    }
+    return z;
+}
+
 function calculateSMA(prices, windowSize) {
     // Это базовый метод анализа временных рядов,
     // который сглаживает временные ряды данных,
@@ -44,7 +70,7 @@ function calculateWMA(prices, windowSize) {
     return wma;
 }
 
-function calculateRSI(prices, period = 14) {
+function calculateRSI(prices, period = 28) {
     // Индекс относительной силы (RSI - Relative Strength Index)
     let gains = 0;
     let losses = 0;
@@ -64,7 +90,7 @@ function calculateRSI(prices, period = 14) {
     return rsi;
 }
 
-function calculateStochasticOscillator(prices, period = 14) {
+function calculateStochasticOscillator(prices, period = 28) {
     // Стохастический осциллятор - это индикатор моментума,
     // который сравнивает текущую цену закрытия с диапазоном цен за определенный период.
     const closingPrices = prices.slice(-period);
@@ -76,7 +102,7 @@ function calculateStochasticOscillator(prices, period = 14) {
     return stochastic;
 }
 
-function calculateMACD(prices, slowPeriod = 26, fastPeriod = 12, signalPeriod = 9) {
+function calculateMACD(prices, slowPeriod = 52, fastPeriod = 24, signalPeriod = 18) {
     // MACD — это трендовый следящий индикатор моментума, который показывает взаимосвязь
     // между двумя скользящими средними цены. Этот индикатор помогает выявить изменения в силе,
     // направлении, моментуме и продолжительности тренда на финансовом рынке.
@@ -88,7 +114,7 @@ function calculateMACD(prices, slowPeriod = 26, fastPeriod = 12, signalPeriod = 
     return { macdLine, signalLine, histogram };
 }
 
-function calculateBollingerBands(prices, period = 20, multiplier = 2) {
+function calculateBollingerBands(prices, period = 40, multiplier = 2) {
     // Bollinger Bands — это индикатор волатильности, который состоит из трех линий:
     // средней (простая скользящая средняя) и двух других, расположенных на определенном числе
     // стандартных отклонений от этой средней. Этот индикатор помогает оценить волатильность и
@@ -129,6 +155,102 @@ function calculateParabolicSAR(prices, step = 0.02, maxStep = 0.2) {
     return sar;
 }
 
+function calculateAutocorrelation(prices, lag) {
+    const n = prices.length;
+    const mean = prices.reduce((sum, price) => sum + price, 0) / n;
+    let numerator = 0;
+    let denominator = 0;
+
+    for (let i = 0; i < n - lag; i++) {
+        numerator += (prices[i] - mean) * (prices[i + lag] - mean);
+    }
+    for (let i = 0; i < n; i++) {
+        denominator += Math.pow(prices[i] - mean, 2);
+    }
+
+    return numerator / denominator;
+}
+
+function calculateLinearRegression(prices) {
+    const n = prices.length;
+    const xSum = prices.reduce((sum, _, idx) => sum + idx, 0);
+    const ySum = prices.reduce((sum, price) => sum + price, 0);
+    const xySum = prices.reduce((sum, price, idx) => sum + idx * price, 0);
+    const x2Sum = prices.reduce((sum, _, idx) => sum + Math.pow(idx, 2), 0);
+
+    const slope = (n * xySum - xSum * ySum) / (n * x2Sum - Math.pow(xSum, 2));
+    const intercept = (ySum - slope * xSum) / n;
+
+    return { slope, intercept };
+}
+
+function calculateCUSUM(prices) {
+    const mean = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const cusum = [0];
+    for (let i = 1; i < prices.length; i++) {
+        cusum[i] = cusum[i - 1] + (prices[i] - mean);
+    }
+    return cusum;
+}
+
+function calculateShapiroWilkTest(prices) {
+    // Это упрощенная реализация, фактический тест требует более сложных вычислений
+    const n = prices.length;
+    const mean = prices.reduce((sum, price) => sum + price, 0) / n;
+    const s = Math.sqrt(prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / n);
+    const sortedPrices = [...prices].sort((a, b) => a - b);
+    const expectedValues = sortedPrices.map((_, i) => mean + s * Math.sqrt(2) * erfinv((i - 0.375) / (n + 0.25)));
+
+    const b = expectedValues.reduce((sum, ev, i) => sum + ev * sortedPrices[i], 0);
+    const W = Math.pow(b, 2) / prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0);
+
+    return W;
+}
+
+function calculateSpearmanCorrelation(data1, data2) {
+    if (data1.length !== data2.length) throw new Error("Arrays must be of the same length");
+
+    const rank = (data) => {
+        const sorted = data
+            .map((value, index) => ({ value, index }))
+            .sort((a, b) => a.value - b.value)
+            .map((v, i) => ({ ...v, rank: i + 1 }));
+        const ranks = Array(data.length);
+        sorted.forEach(({ index, rank }) => {
+            ranks[index] = rank;
+        });
+        return ranks;
+    };
+
+    const rank1 = rank(data1);
+    const rank2 = rank(data2);
+
+    const dSquared = rank1.map((rank, i) => Math.pow(rank - rank2[i], 2));
+    const n = rank1.length;
+    const spearman = 1 - (6 * dSquared.reduce((sum, d) => sum + d, 0) / (n * (n * n - 1)));
+
+    return spearman;
+}
+
+function calculateDickeyFullerTest(prices) {
+    const n = prices.length;
+    const deltaY = prices.slice(1).map((price, i) => price - prices[i]);
+    const yLag = prices.slice(0, n - 1);
+    const deltaYMean = deltaY.reduce((sum, y) => sum + y, 0) / (n - 1);
+    const yLagMean = yLag.reduce((sum, y) => sum + y, 0) / (n - 1);
+
+    const sxx = yLag.reduce((sum, y) => sum + Math.pow(y - yLagMean, 2), 0);
+    const sxy = yLag.reduce((sum, y, i) => sum + (y - yLagMean) * (deltaY[i] - deltaYMean), 0);
+
+    const beta = sxy / sxx;
+    const alpha = deltaYMean - beta * yLagMean;
+    const seAlpha = Math.sqrt((1 / (n - 1)) * ((1 / sxx) * deltaY.reduce((sum, y) => sum + Math.pow(y - deltaYMean - beta * (y - yLagMean), 2), 0)));
+
+    const tStatistic = alpha / seAlpha;
+    return tStatistic;
+}
+
+
 function calculateProbabilityOfGrowth(ticker) {
     return openDatabase().then(db => {
         return new Promise((resolve, reject) => {
@@ -145,6 +267,13 @@ function calculateProbabilityOfGrowth(ticker) {
                     reject(new Error(`No prices available for the ticker ${ticker}.`));
                     return;
                 }
+                const meanPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+                const stdDev = Math.sqrt(prices.reduce((sum, price) => sum + Math.pow(price - meanPrice, 2), 0) / prices.length);
+                const threshold = 2 * stdDev;
+
+                const lag = 1; // Сдвиг на один день назад
+                const currentPrices = prices.slice(lag); // Цены начиная со второго дня
+                const laggedPrices = prices.slice(0, -lag); // Цены до последнего дня
 
                 const sma = calculateSMA(prices, 5);
                 const ema = calculateEMA(prices, 5);
@@ -152,6 +281,12 @@ function calculateProbabilityOfGrowth(ticker) {
                 const macd = calculateMACD(prices);
                 const bollinger = calculateBollingerBands(prices);
                 const parabolicSAR = calculateParabolicSAR(prices);
+                const regression = calculateLinearRegression(prices);
+                const cusum = calculateCUSUM(prices);
+                const autocorrelation = calculateAutocorrelation(prices, 1);
+                const shapiroWilk = calculateShapiroWilkTest(prices);
+                const spearman = calculateSpearmanCorrelation(currentPrices, laggedPrices);
+                const dickeyFuller = calculateDickeyFullerTest(prices);
 
                 const smaLast = sma[sma.length - 1];
                 const emaLast = ema[ema.length - 1];
@@ -168,7 +303,13 @@ function calculateProbabilityOfGrowth(ticker) {
                     sma: 0.10,
                     rsi: 0.10,
                     bollinger: 0.10,
-                    stochastic: 0.10
+                    stochastic: 0.10,
+                    regression: 0.10,
+                    cusum: 0.05,
+                    autocorrelation: 0.15,
+                    shapiroWilk: 0.05,
+                    spearman: 0.05,
+                    dickeyFuller: 0.05
                 };
 
                 // Расчет сигналов
@@ -179,7 +320,13 @@ function calculateProbabilityOfGrowth(ticker) {
                 weightedSum += (wmaLast > smaLast) * weights.wma;
                 weightedSum += (macdHistogramLast > 0) * weights.macd;
                 weightedSum += (priceLast > bollinger.upper[bollinger.upper.length - 1]) * weights.bollinger;
-                weightedSum += (priceLast > psarLast) * weights.stochastic; // Using stochastic weight for PSAR for example
+                weightedSum += (priceLast > psarLast) * weights.stochastic;
+                weightedSum += (regression.slope > 0) * weights.regression;
+                weightedSum += (Math.abs(cusum[cusum.length - 1]) > threshold) * (cusum[cusum.length - 1] > 0 ? weights.cusum : -weights.cusum);
+                weightedSum += (autocorrelation > 0.5) * weights.autocorrelation;
+                weightedSum += (shapiroWilk < someThreshold) * weights.shapiroWilk;
+                weightedSum += (spearman > 0.5) * weights.spearman;
+                weightedSum += (dickeyFuller < criticalValue) * weights.dickeyFuller;
 
                 // Суммируем все веса
                 Object.values(weights).forEach(weight => weightTotal += weight);
@@ -196,6 +343,7 @@ function calculateProbabilityOfGrowth(ticker) {
         });
     });
 }
+
 
 function analyzeAllTickers() {
     return openDatabase().then(db => {

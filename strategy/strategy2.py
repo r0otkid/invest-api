@@ -28,7 +28,7 @@ class TradingStrategy:
         return ema[-1]
 
     @staticmethod
-    def calculate_rsi(prices, period=14):
+    def calculate_rsi(prices, period=10):
         if len(prices) < period:
             return None
 
@@ -59,8 +59,6 @@ class TradingStrategy:
         if not history_records:
             return ["Error: No historical data found"]
 
-        # last_data = history_records[0]['marketData']
-
         trends = {}
         for record in history_records:
             for ticker, data in record['marketData'].items():
@@ -76,17 +74,17 @@ class TradingStrategy:
 
             sma = self.calculate_sma(prices, period=5)  # 5-дневный SMA
             ema = self.calculate_ema(prices, period=5)  # 5-дневный EMA
-            rsi = self.calculate_rsi(prices, period=14)
+            rsi = self.calculate_rsi(prices, period=10)
 
             if sma is not None and ema is not None:
-                if (current_price > ema and current_price > sma and forecast_prob > 0.5) or (
+                if (current_price > ema and current_price > sma and forecast_prob > 0.5) and (
                     rsi is not None and rsi < 30
                 ):
-                    messages.append(f"📈 BUY {ticker} - Good forecast probability")
-                elif (current_price < ema and current_price < sma and forecast_prob < 0.5) or (
+                    messages.append(f"📈 BUY {ticker} - Good forecast")
+                elif (current_price < ema and current_price < sma and forecast_prob < 0.5) and (
                     rsi is not None and rsi > 70
                 ):
-                    messages.append(f"📉 SELL {ticker} - Low forecast probability")
+                    messages.append(f"📉 SELL {ticker} - Low forecast")
                 else:
                     messages.append(f"⏳ HOLD {ticker} - No clear action")
         return messages

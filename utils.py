@@ -35,18 +35,6 @@ async def get_instruments(instrument_list, find_function) -> list:
     return instruments
 
 
-# async def create_order(account_id, amount, instrument_id, order_type):
-#     """Общая функция для создания рыночного ордера на покупку или продажу."""
-#     if not instrument_id:
-#         return web.json_response({"error": "Instrument ID is required"})
-
-#     if order_type == "buy":
-#         response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
-#     else:
-#         response = await sell_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
-#     return web.json_response(response)
-
-
 async def process_forecast(collection, new_data) -> dict:
     market_data = new_data['marketData']
     forecast_results = {}
@@ -54,12 +42,7 @@ async def process_forecast(collection, new_data) -> dict:
     # Получаем последние 30 записей для каждого тикера
     for ticker, info in market_data.items():
         current_price = info['price']
-        forecasts_query = collection.find(
-            {"marketData." + ticker: {"$exists": True}},
-            sort=[("_id", -1)],
-            projection={"marketData." + ticker: 1, "analyticsData": 1},
-        ).limit(30)
-
+        forecasts_query = collection.find({"marketData." + ticker: {"$exists": True}}).limit(30)
         last_records = await forecasts_query.to_list(length=30)
         correct_forecasts = 0
         total_forecasts = 0
