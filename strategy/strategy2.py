@@ -53,8 +53,8 @@ class TradingStrategy:
 
     async def make_predicate(self) -> list:
         messages = []
-        cursor = self.db.market_data.find().sort('_id', -1).limit(10)  # Увеличено количество для EMA/SMA
-        history_records = await cursor.to_list(length=10)
+        cursor = self.db.market_data.find().sort('_id', -1).limit(30)
+        history_records = await cursor.to_list(length=30)
 
         if not history_records:
             return ["Error: No historical data found"]
@@ -68,7 +68,12 @@ class TradingStrategy:
 
         for ticker, data in self.market_data.items():
             current_price = data['price']
-            # last_price = last_data.get(ticker, {}).get('price', current_price)
+            instrument = await self.db.instruments.find_one({'ticker': ticker})
+            cursor = self.db.orders.find({'order_type': 'buy', 'instrument_uid': instrument['uid']})
+            buy_orders = await cursor.to_list(length=None)
+            prices = [order['price'] for order in buy_orders]
+            buy_price = np.mean(prices) if prices else current_price  #  среднее арифметическое цен покупки или текущая
+
             forecast_prob = self.forecast.get(ticker, 0)
             prices = trends.get(ticker, [])
 
@@ -76,15 +81,27 @@ class TradingStrategy:
             ema = self.calculate_ema(prices, period=5)  # 5-дневный EMA
             rsi = self.calculate_rsi(prices, period=10)
 
-            if sma is not None and ema is not None:
-                if (current_price > ema and current_price > sma and forecast_prob > 0.4) and (
-                    rsi is not None and rsi < 30
-                ):
-                    messages.append(f"📈 BUY {ticker} - Good forecast")
-                elif (current_price < ema and current_price < sma and forecast_prob > 0.5) and (
-                    rsi is not None and rsi > 70
-                ):
-                    messages.append(f"📉 SELL {ticker} - Low forecast")
-                else:
-                    messages.append(f"⏳ HOLD {ticker} - No clear action")
+            # Рассчитать процент изменения цены
+            price_change = (current_price - buy_price) / buy_price * 100
+
+            logging.warning(f"Price change for {ticker}: {price_change:.2f}%")
+            security_obj = await self.db.securities.find_one({})
+            securities = security_obj.get('securities', []) if security_obj else []
+            sec_balance = securities.get(ticker, {}).get('balance', 0)
+            if price_change <= -self.sl and sec_balance > 0:
+                messages.append(f"📉 SELL {ticker} - Stop Loss")
+            elif price_change >= self.tp and sec_balance > 0:
+                messages.append(f"📉 SELL {ticker} - Take Profit")
+            else:
+                if sma is not None and ema is not None:
+                    if (current_price > ema and current_price > sma and forecast_prob > 0.4) and (
+                        rsi is not None and rsi < 30
+                    ):
+                        messages.append(f"📈 BUY {ticker} - Good forecast")
+                    elif (current_price < ema and current_price < sma and forecast_prob > 0.5) and (
+                        rsi is not None and rsi > 70
+                    ):
+                        messages.append(f"📉 SELL {ticker} - Low forecast")
+                    else:
+                        messages.append(f"⏳ HOLD {ticker} - No clear action")
         return messages

@@ -1,3 +1,4 @@
+import logging
 import motor.motor_asyncio
 import os
 from typing import Optional
@@ -32,15 +33,15 @@ routes = web.RouteTableDef()
 
 INSTRUMENTS = [
     "BBG004730N88",  # SBER
-    # "BBG00475K2X9",  # HYDR
+    "BBG00475K2X9",  # HYDR
     "BBG004S68473",  # IRAO
     "BBG004730ZJ9",  # VTBR
     # "TCS00A107RM8",  # ZAYMER
     "BBG004731489",  # GMKN
     "TCS00A105EX7",
-    # "BBG333333333",  # фонды
-    # "TCS10A101X50",
-    # "TCS00A107597",
+    "BBG333333333",  # фонды
+    "TCS10A101X50",
+    "TCS00A107597",
 ]
 
 
@@ -254,18 +255,18 @@ async def get_securities_handler(request):
     security = await db.securities.find_one({})
     instruments = await db.instruments.find({}).to_list(length=1000)
     securities = security.get('securities', []) if security else []
-    prices = []
+    # prices = []
     for security in securities:
-        order = await db.orders.find_one({'instrument_uid': security['instrument_uid'], 'order_type': 'buy'})
-        price = order['price'] if order else 0
-        prices.append(price)
+        cursor = db.market_data.find().sort('_id', -1).limit(1)
+        data = await cursor.next()
         instrument = next((i for i in instruments if i['uid'] == security['instrument_uid']), None)
         if instrument and '_id' in instrument:
             del instrument['_id']
         security['instrument'] = instrument
+        security['price'] = data['marketData'][instrument['ticker']]['price'] if data else 0
         if '_id' in security:
             del security['_id']
-    return web.json_response({"securities": securities, 'prices': prices})
+    return web.json_response({"securities": securities})
 
 
 @routes.get("/buy-sell-orders")

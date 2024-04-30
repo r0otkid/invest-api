@@ -57,7 +57,7 @@ body {
     text-align: center;
     min-width: 90px;
     border: none;
-    color: white;
+    color: black;
     padding: 6px 12px;
     text-decoration: none;
     display: inline-block;
@@ -74,10 +74,33 @@ body {
     box-shadow: 0 8px 16px 0 rgba(0,0,0,0.3); /* Более заметная тень при наведении */
 }
 
+.balance {
+    color: #abb2bf;
+    padding: 5px 7px;
+    font-family: 'Courier New', Courier, monospace;
+    border: 1px solid #343030;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border-radius: 1px;
+    margin-top: 5px;
+    font-size: 19pt;
+    height: 131px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.balance, .balance div {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 3px;
+}
+
 .stock-widget {
     font-family: 'Arial', sans-serif;
     font-size: 9pt;
-    color: #fff;
+    color: rgb(148, 157, 161);
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
     padding: 3px;
     margin: 3px;
@@ -90,18 +113,30 @@ body {
 .stock-widget table {
     width: 100%;
     border-collapse: collapse;
+    line-height: 1;
+    font-size: 9pt;
 }
 
-.stock-widget th, .stock-widget td {
-    padding: 8px;
+.stock-widget th {
+    padding: 2.5px;
     text-align: left;
     border-radius: 1px;
     border: 1px solid #333;
+    color: silver;
+    font-weight: bolder;
+}
+
+.stock-widget td {
+    padding: 2.5px;
+    text-align: left;
+    border-radius: 1px;
+    border: 1px solid #333 !important;
     transition: transform 0.3s ease;
 }
 
 .stock-widget th:first-child, .stock-widget td:first-child {
     width: 5%;
+    text-align: center;
 }
 
 .stock-widget th:last-child, .stock-widget td:last-child {
@@ -110,21 +145,32 @@ body {
 
 }
 
-
 .stock-widget th:nth-child(3), .stock-widget td:nth-child(3) {
-    text-align: left;
+    text-align: center;
     width: 20%;
+    opacity: 0.6;
 }
 
 .stock-widget th:nth-child(4), .stock-widget td:nth-child(4) {
-    text-align: right;
+    text-align: center;
 }
 
+.stock-widget td:nth-child(4), .stock-widget td:nth-child(4) {
+    font-weight: bold;
+}
+
+.stock-widget td:nth-child(5), .stock-widget td:nth-child(5), .stock-widget th:nth-child(5) {
+    text-align: center;
+}
 
 .stock-widget tr:hover {
     background-color: #444;
 }
 
+.stock-widget table td {
+    line-height: 1;  /* Меньше значение = меньше высота строки */
+    height: 5px;    /* Задаем фиксированную высоту для ячеек */
+}
 
 .orders {
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
@@ -166,6 +212,12 @@ body {
     align-items: flex-start;
 }
 
+.left {
+    display: flex;
+    flex-direction: column;
+    width: 350px;
+}
+
 .red, .stock-widget tr.red:hover {
     background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */
     transition: background-color 0.3s ease, transform 0.3s ease;
@@ -191,15 +243,31 @@ body {
 
 
 #balance {
-    font-weight: bolder;
-    font-size: 12pt;
-    color: dodgerblue;
+    font-weight: bold;
+    font-size: 17pt;
+    color: goldenrod;
+    margin-top: -3px;
 }
+
+#sec-balance {
+    font-weight: bold;
+    font-size: 17pt;
+    color: darkgoldenrod;
+    margin-top: -3px;
+}
+
+#total-balance {
+    font-weight: bolder;
+    font-size: 21pt;
+    color: #3b5b07;
+    margin-top: -3px;
+}
+
 
 #exchange-timer {
     padding: 5px 10px;
     background: linear-gradient(to right, #240644, #09214a); /* Градиентный фон */
-    color: white;
+    color: #abb2bf;
     font-size: 18px;
     font-weight: bold;
     text-align: center;
@@ -220,7 +288,7 @@ body {
 
 #state-bar {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     color: #ffffff;
     padding: 5px 7px;
@@ -231,7 +299,6 @@ body {
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.7); /* Светящийся текст */
     transition: all 0.3s ease; /* Плавный переход состояний */
     height: 155px;
-    width: 35%;
 }
 
 #state-bar:hover {
@@ -241,12 +308,12 @@ body {
 }
 
 #current-state {
-    width: 100%;
-    min-height: 100%;
+    justify-content: center;
+    align-items: center;
     opacity: 0.9;
     padding: 3px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-    color: dodgerblue;
+    color: dodgerblue !important;
 }
 
 #order {
@@ -271,26 +338,28 @@ body {
     height: 153px;
     border-radius: 1px;
     color: seagreen;
+    height: 300px;
 }
 
 /* Стилизация скроллбара */
 #orders::-webkit-scrollbar {
-    width: 8px; /* ширина скроллбара */
+    width: 8px;
 }
 
 #orders::-webkit-scrollbar-track {
-    background: #2b2b2b; /* цвет дорожки скроллбара */
+    background: #2b2b2b;
 }
 
 #orders::-webkit-scrollbar-thumb {
-    background-color: #555; /* цвет ползунка скроллбара */
-    border-radius: 10px; /* скругление углов ползунка */
-    border: 2px solid #2b2b2b; /* рамка ползунка */
+    background-color: #555;
+    border-radius: 10px;
+    border: 2px solid #2b2b2b;
 }
 
 
 #orders-table {
     width: 100%;
+    height: 300px;
     border-collapse: collapse;
     color: silver;
     border: 1px solid #35413a;

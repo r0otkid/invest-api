@@ -57,4 +57,8 @@ class BalanceCalculator:
                             amount_for_sell = balance // lot
                 else:
                     amount_for_sell = balance // lot
+
+                if balance - amount_for_sell < 0:
+                    amount_for_sell = 0
+
         return amount_for_sell

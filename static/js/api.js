@@ -83,7 +83,7 @@ const refreshBalance = () => {
         url: '/get-balance',
         type: 'GET',
         success: function (response) {
-            $("#balance").text(response);
+            $("#balance").text(parseFloat(response).toFixed(2));
         },
         error: function (xhr, status, error) {
             console.error("Произошла ошибка при получении баланса: " + error);
@@ -92,18 +92,28 @@ const refreshBalance = () => {
 }
 
 
-const refreshSecurities = () => {
-    getAllSecurities().then(securities => {
-        securities.forEach(security => {
-            const uid = security.instrument_uid;
-            const balance = security.balance;
-            $(`#securities-${uid}`).html(balance);
-        });
-    }).catch(error => {
-        console.error('👺 Ошибка при загрузке бумаг:', error);
-    })
+const loadSecurities = () => {
+    $.ajax({
+        url: '/get-securities',
+        type: 'GET',
+        success: (response) => {
+            const securities = response.securities;
+            let total = 0;
+            securities.forEach(security => {
+                $(`#securities-${security.instrument_uid}`).html(security.balance);
+                const uid = security.instrument_uid;
+                const balance = security.balance;
+                $(`#securities-${uid}`).html(balance);
+                total += parseFloat(security.balance * security.price);
+            })
+            $(`#sec-balance`).html(total.toFixed(2));
+            $(`#total-balance`).html((total + parseFloat($('#balance').text())).toFixed(2));
+        },
+        error: (error) => {
+            console.error('👺 Ошибка при загрузке бумаг:', error);
+        }
+    });
 }
-
 
 const sendMarketData = (sl, tp) => {
     fetchLatestTickerData().then(data => {
@@ -125,6 +135,7 @@ const sendMarketData = (sl, tp) => {
                     const forecastCell = row.find('td:eq(3)');
                     const color = getForecastColor(forecast);
                     forecastCell.css('background-color', color);
+                    forecastCell.css('color', 'rgb(38, 51, 55)');
                 }
                 displayPredicate(response.predicate);
                 loadOrders();
@@ -136,23 +147,6 @@ const sendMarketData = (sl, tp) => {
     }).catch(error => {
         console.error("Ошибка при получении данных:", error);
     });
-}
-
-const loadSecurities = () => {
-    $.ajax({
-        url: '/get-securities',
-        type: 'GET',
-        success: (response) => {
-            const securities = response.securities;
-            securities.forEach(security => {
-                $(`#securities-${security.instrument_uid}`).html(security.balance);
-            })
-        },
-        error: (error) => {
-            console.error('👺 Ошибка при загрузке бумаг:', error);
-        }
-    });
-
 }
 
 const startBot = () => {
@@ -214,15 +208,15 @@ const loadOrders = () => {
                     profit = (order.price - avgPrice) * quantity;
                     profit = profit.toFixed(2); // Форматирование значения до двух десятичных знаков
                 }
-
+                const color = profit > 0 ? 'goldenrod' : 'orangered';
                 $('#orders-table tbody').append(`
-                    <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : 'orangered'}">
+                    <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : color}">
                         <td>${order.instrument.figi}</td>
                         <td>${order.instrument.ticker}</td>
                         <td>${order.price}</td>
                         <td>${order.order_type}</td>
                         <td>${quantity}</td>
-                        <td>${profit}</td>
+                        <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : profit}</b> <code>RUB</code></td>
                     </tr>
                 `);
             });

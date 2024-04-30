@@ -13,8 +13,6 @@
       <div class="toolbox">
         <div>
           <span id="status" class="red">&nbsp;</span>[<code id="tariff"></code>]
-          <br />
-          <b>БАЛАНС</b>: <code id="balance">{{ balance }}</code> RUB
         </div>
         <div>
           <button class="btn" id="delete-acc">🔨 Удалить</button>
@@ -57,8 +55,21 @@
       </div>
     </div>
     <div class="stats">
-      <div id="state-bar">
-        <span id="current-state"></span>
+      <div class="left">
+        <div id="state-bar">
+          <span id="current-state"></span>
+        </div>
+        <div class="balance">
+          <div>
+            <code id="balance">{{ balance }}</code> <span style="margin-left: 5px;">RUB</span>
+          </div>
+          <div>
+            <code id="sec-balance">0</code> <span style="margin-left: 5px;">RUB</span>
+          </div>
+          <div>
+            <code id="total-balance">0</code> <span style="margin-left: 5px;">RUB</span>
+          </div>
+        </div>
       </div>
       <div id="orders">
         <table id="orders-table">
@@ -114,7 +125,7 @@
         marketDataIntervalId = setInterval(() => {
             sendMarketData($('#sl').val(), $('#tp').val());
             loadSecurities();
-        }, 10000);
+        }, 3000);
       }
 
       const stopSendingMarketData = () => {
@@ -157,10 +168,8 @@
           balance.click(() => refreshBalance());
           
           setInterval(refreshBalance, 10000);
-          setInterval(refreshSecurities, 10000);
 
           $('#generate-data').click(() => generateData() && window.location.reload());
-          loadSecurities();
         })
     </script>
   </body>

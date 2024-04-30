@@ -56,7 +56,7 @@ const updateExistingRow = (instrument, stockRow, closePrice) => {
             const tickerToBuy = bestToBuy.ticker;
             const tickerToSell = bestToSell.ticker;
 
-            $('#stock-widget tbody tr').find('td:eq(1)').css('color', 'white');
+            $('#stock-widget tbody tr').find('td:eq(1)').css('color', '#abb2bf');
 
             $(`#stock-${tickerToBuy}`).find('td:eq(1)').css('color', 'darkseagreen');
 
@@ -75,14 +75,17 @@ const updateExistingRow = (instrument, stockRow, closePrice) => {
         console.error('Ошибка при выполнении selectBestTradingOptions:', error);
     });
 
-    stockRow.find('td:eq(5)').html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
+    const lastColumn = stockRow.find('td:eq(5)');
+    color !== 'black' && lastColumn.css('color', 'rgb(38, 51, 55)');
+    lastColumn.html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
     setTimeout(() => {
-        stockRow.find('td:eq(5)').attr('class', 'stock');
+        lastColumn.attr('class', 'stock');
         let currentHtml = stockRow.find('td:eq(5) b').html();
         // Заменяем '+' и '-' на пустую строку, если они есть
         let updatedHtml = currentHtml.replace(/\+|\-/g, '');
         // Обновляем содержимое элемента <b> в ячейке
         stockRow.find('td:eq(5) b').html(updatedHtml);
+        lastColumn.css('color', '#abb2bf');
     }, 500);
 }
 
@@ -112,16 +115,17 @@ const collectAnalyticsData = () => {
 }
 
 const getForecastColor = (value) => {
-    // Плавный переход от тёмно-красного к тёмно-зелёному
+    // Плавный переход от мягкого красного к мягкому зелёному
     const hue = value * 120; // 0 (красный) - 120 (зелёный) в HSL
-    const saturation = 50 + (50 * value); // Увеличиваем насыщенность с ростом value
-    const lightness = 40; // Фиксированная яркость для менее ярких цветов
+    const saturation = 30; // Более низкая насыщенность для мягкости цвета
+    const lightness = 50 + (10 * value); // Плавно увеличиваем яркость для большей мягкости
 
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 const displayPredicate = (predicates) => {
     const $currentState = $('#current-state');
+    $currentState.css('justify-content', 'center').css('align-items', 'center');
     const actionablePredicates = predicates.filter(p => !p.includes('No clear action'));
 
     // Если нет действенных предложений, показываем одно сообщение "No clear action"
@@ -131,11 +135,13 @@ const displayPredicate = (predicates) => {
         });
     } else if (actionablePredicates.length > 0) {
         // Отображаем только те предложения, которые требуют действий
-        const formattedPredicates = actionablePredicates.join('<br>');
+        const formattedPredicates = actionablePredicates.map(p => {
+            const color = p.includes('📉') ? 'orangered' : 'seagreen';
+            return `<div class="${color}">${p}</div>`
+        }).join('');
         $currentState.html(formattedPredicates).delay(500).fadeOut(500, () => {
             $currentState.show().css('opacity', '');
         });
-        formattedPredicates.includes('Buy') && sendMessage(formattedPredicates.replace('<br>', '\n'));
     } else {
         // Если предложений нет, показываем пустое состояние или сообщение по умолчанию
         $currentState.html('No data available').delay(500).fadeOut(500, () => {
