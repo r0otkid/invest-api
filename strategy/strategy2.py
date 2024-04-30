@@ -87,7 +87,12 @@ class TradingStrategy:
             logging.warning(f"Price change for {ticker}: {price_change:.2f}%")
             security_obj = await self.db.securities.find_one({})
             securities = security_obj.get('securities', []) if security_obj else []
-            sec_balance = securities.get(ticker, {}).get('balance', 0)
+
+            sec_balance = 0
+            for sec in securities:
+                if sec['instrument_uid'] == instrument['uid']:
+                    sec_balance = sec['balance']
+
             if price_change <= -self.sl and sec_balance > 0:
                 messages.append(f"📉 SELL {ticker} - Stop Loss")
             elif price_change >= self.tp and sec_balance > 0:

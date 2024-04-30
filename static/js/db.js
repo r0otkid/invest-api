@@ -63,14 +63,14 @@ function deleteOldQuotes() {
     }
 
     openDatabase().then(db => {
-        const oneDayAgo = new Date();
-        oneDayAgo.setHours(oneDayAgo.getHours() - 24);
+        const oneHourAgo = new Date();
+        oneDayAgo.setHours(oneHourAgo.getHours() - 1);
 
         const transaction = db.transaction(["quotes"], "readwrite");
         const store = transaction.objectStore("quotes");
         const index = store.index("timestamp"); // Предполагается, что у вас есть индекс по временной метке
 
-        const range = IDBKeyRange.upperBound(oneDayAgo.getTime());
+        const range = IDBKeyRange.upperBound(oneHourAgo.getTime());
         const request = index.openCursor(range);
 
         request.onsuccess = function (event) {
