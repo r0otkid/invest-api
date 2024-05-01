@@ -41,9 +41,10 @@ INSTRUMENTS = [
     # "TCS00A107RM8",  # ZAYMER
     "BBG004731489",  # GMKN
     "TCS00A105EX7",
-    "BBG333333333",  # фонды
-    "TCS10A101X50",
-    "TCS00A107597",
+    # фонды
+    "BBG333333333",  # TMOS
+    # "TCS10A101X50",
+    # "TCS00A107597",
 ]
 
 

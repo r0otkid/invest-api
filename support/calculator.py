@@ -33,7 +33,9 @@ class BalanceCalculator:
         """Возвращает количество акций для покупки"""
         lot = await self.get_lot_quantity(instrument_id=instrument_id)
         money_balance = await self.get_money()
-        amount_for_buy = int(money_balance / price / lot / 3)
+        amount_for_buy = int(money_balance / price / lot / 6)
+        if amount_for_buy == 0:
+            amount_for_buy = int(money_balance / price / lot / 3)
 
         if amount_for_buy * price * lot > money_balance:
             amount_for_buy = 0

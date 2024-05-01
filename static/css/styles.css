@@ -2,6 +2,10 @@ body {
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); 
 }
 
+label {
+    font-size: 11pt !important;
+}
+
 .information {
     display: flex;
     justify-content: center;
@@ -56,8 +60,10 @@ body {
     background-color: #4CAF50;
     text-align: center;
     min-width: 90px;
+    max-height: 25px;
     border: none;
-    color: black;
+    font-weight: bolder;
+    color: rgba(22, 20, 20, 0.841);
     padding: 6px 12px;
     text-decoration: none;
     display: inline-block;
@@ -174,7 +180,7 @@ body {
 
 .orders {
     background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
-    color: #abb2bf; /* светлый текст */
+    color: lightslategrey;
     padding: 20px;
     border-radius: 1px;
     width: 33%;
@@ -183,12 +189,13 @@ body {
 .orders label {
     display: block;
     margin-bottom: 5px;
-    font-size: 16px;
+    font-size: 9pt !important;
+    text-align: right;
 }
 
 .orders input[type="number"] {
     background: linear-gradient(to right, #3a3f4b, #1a1a1a); /* Тёмный градиент */
-    color: #abb2bf; /* цвет текста */
+    color: lightslategrey;
     border: none;
     padding: 8px;
     border-radius: 4px;
@@ -212,10 +219,70 @@ body {
     align-items: flex-start;
 }
 
+.slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 15px;
+    border-radius: 5px;
+    background: #333;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #ddd;
+    cursor: pointer;
+}
+
+.slider::-moz-range-thumb {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    background: #ddd;
+    cursor: pointer;
+}
+
+.parameters {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.parameter {
+    flex: 0 0 48%; /* Устанавливаем ширину колонок, чтобы они занимали примерно половину контейнера */
+    margin-bottom: 20px; /* Добавляем немного отступа снизу */
+}
+
+.slider {
+    width: 100%; /* Устанавливаем ширину ползунка равной ширине его контейнера */
+    margin-top: 5px; /* Небольшой отступ сверху для визуальной приятности */
+}
+
 .left {
     display: flex;
     flex-direction: column;
     width: 350px;
+}
+
+.red-font {
+    color: rgb(255, 107, 53) !important;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.green-font {
+    color: darkseagreen !important;
+    transition: color 0.3s ease, transform 0.3s ease;
 }
 
 .red, .stock-widget tr.red:hover {
@@ -364,4 +431,42 @@ body {
     color: silver;
     border: 1px solid #35413a;
     text-align: center;
+}
+
+#intervalDisplay {
+    font-size: 9pt;
+    font-weight: bolder;
+    color: steelblue;
+}
+
+#intervalStoring {
+    font-size: 9pt;
+    font-weight: bolder;
+    color: darkolivegreen;
+}
+
+#db-counter {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #222; 
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6); 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+}
+
+#total-quotes {
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #eee;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#date-range {
+    font-size: 10px;
+    color: #5b9d63;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }

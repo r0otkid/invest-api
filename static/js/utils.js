@@ -31,7 +31,6 @@ function calculateAveragePrices(orders) {
     let averagePrices = {};
 
     buyOrders.forEach(order => {
-        console.log(order)
         let instrument_uid = order.instrument_uid;
         if (!averagePrices[instrument_uid]) {
             averagePrices[instrument_uid] = { sum: 0, count: 0 };
@@ -98,7 +97,9 @@ const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
         // Иначе обновляем существующую строку
         updateExistingRow(instrument, stockRow, closePrice);
     }
+    deleteOldQuotes();
     addQuote(instrument.ticker, closePrice);
+
 };
 
 const collectAnalyticsData = () => {
@@ -136,7 +137,7 @@ const displayPredicate = (predicates) => {
     } else if (actionablePredicates.length > 0) {
         // Отображаем только те предложения, которые требуют действий
         const formattedPredicates = actionablePredicates.map(p => {
-            const color = p.includes('📉') ? 'orangered' : 'seagreen';
+            const color = p.includes('📉') ? 'red-font' : 'green-font';
             return `<div class="${color}">${p}</div>`
         }).join('');
         $currentState.html(formattedPredicates).delay(500).fadeOut(500, () => {

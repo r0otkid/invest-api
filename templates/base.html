@@ -15,10 +15,13 @@
           <span id="status" class="red">&nbsp;</span>[<code id="tariff"></code>]
         </div>
         <div>
-          <button class="btn" id="delete-acc">🔨 Удалить</button>
-          <button class="btn" id="open-acc">🚀 Открыть</button>
-          <button class="btn" id="add-money">💰 Пополнить</button>
-          <button class="btn yellow" id="generate-data">🌪 Заполнить</button>
+          <button class="btn" id="delete-acc">🔨 Reload</button>
+          <button class="btn yellow" id="generate-data">🛒 Fill db</button>
+          <button class="btn yellow" id="clear-data">🚽 Clear db</button>
+        </div>
+        <div id="db-counter">
+          <div id="total-quotes"></div>
+          <div id="date-range"></div>
         </div>
         <div id="exchange-timer">Загрузка времени...</div>
       </div>
@@ -50,8 +53,45 @@
         <input type="number" id="sl" value="0.25" placeholder="%" />
         <label for="tp">Take Profit</label>
         <input type="number" id="tp" value="0.15" placeholder="%" />
-        <br /><br />
-        <button style="float: right; margin-top: 50px;" class="btn blue" id="start">Start Bot</button>
+        <br />
+        <label for="intervalSlider">Market data interval:</label>
+        <input type="range" id="intervalSlider" min="1" max="60" value="6" class="slider" />
+        <div id="intervalDisplay">6 sec</div>
+
+        <label for="hoursToStore">Hours to store:</label>
+        <input type="range" id="hoursToStore" min="1" max="184" value="12" class="slider" />
+        <div id="intervalStoring">1 hour</div>
+        <div class="parameters">
+          <!-- SMA -->
+          <div class="parameter">
+            <label for="smaSlider">SMA Window Size:</label>
+            <input type="range" id="smaSlider" min="1" max="100" value="10" class="slider" />
+            <span id="smaValue">10 items</span>
+          </div>
+
+          <!-- EMA -->
+          <div class="parameter">
+            <label for="emaSlider">EMA Period:</label>
+            <input type="range" id="emaSlider" min="1" max="100" value="10" class="slider" />
+            <span id="emaValue">10 items</span>
+          </div>
+
+          <!-- WMA -->
+          <div class="parameter">
+            <label for="wmaSlider">WMA Window Size:</label>
+            <input type="range" id="wmaSlider" min="1" max="100" value="10" class="slider" />
+            <span id="wmaValue">10 items</span>
+          </div>
+
+          <!-- RSI -->
+          <div class="parameter">
+            <label for="rsiSlider">RSI Period:</label>
+            <input type="range" id="rsiSlider" min="1" max="50" value="14" class="slider" />
+            <span id="rsiValue">14 items</span>
+          </div>
+        </div>
+
+        <button style="float: right; margin-top: 5px;" class="btn blue" id="start">Start Bot</button>
       </div>
     </div>
     <div class="stats">
@@ -95,6 +135,8 @@
     <script>
       let isBotStarted = false;
       let marketDataIntervalId;
+      let marketDataInterval = 6000;
+      let hoursToStore = 1;
       const instruments = {{ instruments|tojson }};
       const token = "{{ token }}";
       const botToken = "{{ bot_token }}";
@@ -103,8 +145,20 @@
       const figiList = {{ figi_list|tojson }};
       const chartInstances = {};
 
+      let smaWindowSize = 10;
+      let emaPeriod = 10;
+      let wmaWindowSize = 10;
+      let rsiPeriod = 14;
+
       const balance = $("#balance");
       const currentState =  $('current-state');
+
+      function setupAutomaticUpdates() {
+        setInterval(() => {
+            countQuotes();
+            getDateRange();
+        }, 1000);
+    }
 
       const checkRowsAndShowButton = () => {
         const rowCount = $('#stock-widget table tr').length - 1
@@ -113,7 +167,7 @@
           $('#current-state').html('Ready to start').css('color', 'green')
           clearInterval(intervalId)
         } else {
-          $('#start').css('display', 'none')
+          $('#start').css('display', 'block')  // todo: display -> none
           $('#current-state').html('Loading...').css('color', 'dodgerblue')
         }
       }
@@ -122,12 +176,34 @@
       // Установка и удаление интервала отправки данных на сервер
       const sendMarketDataWithInterval = () => {
         if (marketDataIntervalId) clearInterval(marketDataIntervalId);
+      
         marketDataIntervalId = setInterval(() => {
-            sendMarketData($('#sl').val(), $('#tp').val());
-            loadSecurities();
-        }, 3000);
-      }
-
+          sendMarketData($('#sl').val(), $('#tp').val());
+          loadSecurities();
+          refreshBalance();
+          getAllSecurities().then(securities => {
+            $('#stock-widget tbody tr').each(function() {
+              $(this).find('td:eq(2)').empty();
+            });
+            securities.forEach(security => {
+              const uid = security.instrument_uid;
+              const balance = security.balance;
+              $(`#securities-${uid}`).html(balance);
+            });
+          }).catch(error => {
+            console.error('👺 Ошибка при загрузке бумаг:', error);
+          });
+        }, marketDataInterval);
+      };
+      
+      $('#intervalSlider').on('input', function() {
+        marketDataInterval = $(this).val() * 1000; // Обновляем интервал в миллисекундах
+        $('#intervalDisplay').text($(this).val() + ' sec');
+      });
+      $('#hoursToStore').on('input', function() {
+        hoursToStore = $(this).val();
+        $('#intervalStoring').text($(this).val() + ' hours');
+      });
       const stopSendingMarketData = () => {
           if (marketDataIntervalId) {
               clearInterval(marketDataIntervalId);
@@ -166,10 +242,45 @@
           $('#start').css('display', 'none');
 
           balance.click(() => refreshBalance());
-          
-          setInterval(refreshBalance, 10000);
 
           $('#generate-data').click(() => generateData() && window.location.reload());
+          $('#clear-data').on('click', () => {
+            deleteOldQuotes();
+          });
+
+          const rsiValue = $('#rsiValue');
+          const smaValue = $('#smaValue');
+          const emaValue = $('#emaValue');
+          const wmaValue = $('#wmaValue');
+
+          smaValue.css('font-size', '7pt');
+          rsiValue.css('font-size', '7pt');
+          emaValue.css('font-size', '7pt');
+          wmaValue.css('font-size', '7pt');
+
+          $('#smaSlider').on('input', function() {
+              smaWindowSize = parseInt($(this).val());
+              smaValue.text(smaWindowSize) + "items";
+              smaValue.css('font-size', '7pt')
+          });
+      
+          $('#emaSlider').on('input', function() {
+              emaPeriod = parseInt($(this).val());
+              emaValue.text(emaPeriod) + "items";
+              emaValue.css('font-size', '7pt')
+          });
+      
+          $('#wmaSlider').on('input', function() {
+              wmaWindowSize = parseInt($(this).val());
+              wmaValue.text(wmaWindowSize) + "items";
+              wmaValue.css('font-size', '7pt')
+          });
+      
+          $('#rsiSlider').on('input', function() {
+              rsiPeriod = parseInt($(this).val());
+              rsiValue.text(rsiPeriod) + "items";
+          });
+          setupAutomaticUpdates();
         })
     </script>
   </body>

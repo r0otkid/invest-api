@@ -13,24 +13,10 @@ const closeAllAccounts = () => {
     });
 }
 
-const openAccount = () => {
-    $.ajax({
-        url: '/open-sandbox-account',
-        type: 'GET',
-        success: (response) => {
-            console.log('Аккаунт открыт', response);
-            alert('Аккаунт открыт.');
-        },
-        error: (error) => {
-            console.log('Ошибка при открытии аккаунта', error);
-            alert('Произошла ошибка при открытии аккаунта в песочнице.');
-        }
-    });
-}
 
 const addMoney = () => {
     $.ajax({
-        url: '/add-money',
+        url: '/add-money?money=50000',
         type: 'GET',
         success: (response) => {
             console.log('Баланс пополнен', response);
@@ -39,6 +25,21 @@ const addMoney = () => {
         error: (error) => {
             console.log('Ошибка при пополнении баланса', error);
             alert('Произошла ошибка при пополнении баланса.');
+        }
+    });
+}
+
+const openAccount = () => {
+    $.ajax({
+        url: '/open-sandbox-account',
+        type: 'GET',
+        success: (response) => {
+            addMoney();
+            alert('Аккаунт открыт.');
+        },
+        error: (error) => {
+            console.log('Ошибка при открытии аккаунта', error);
+            alert('Произошла ошибка при открытии аккаунта в песочнице.');
         }
     });
 }

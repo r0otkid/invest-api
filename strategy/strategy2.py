@@ -92,18 +92,19 @@ class TradingStrategy:
             for sec in securities:
                 if sec['instrument_uid'] == instrument['uid']:
                     sec_balance = sec['balance']
-
-            if price_change <= -self.sl and sec_balance > 0:
+            sl = self.sl if instrument['instrument_type'] == 'share' else self.sl / 10
+            tp = self.tp if instrument['instrument_type'] == 'share' else self.tp / 10
+            if price_change <= -sl and sec_balance > 0:
                 messages.append(f"📉 SELL {ticker} - Stop Loss")
-            elif price_change >= self.tp and sec_balance > 0:
+            elif price_change >= tp and sec_balance > 0:
                 messages.append(f"📉 SELL {ticker} - Take Profit")
             else:
                 if sma is not None and ema is not None:
-                    if (current_price > ema and current_price > sma and forecast_prob > 0.4) and (
+                    if (current_price > ema and current_price > sma and forecast_prob > 0.37) and (
                         rsi is not None and rsi < 30
                     ):
                         messages.append(f"📈 BUY {ticker} - Good forecast")
-                    elif (current_price < ema and current_price < sma and forecast_prob > 0.5) and (
+                    elif (current_price < ema and current_price < sma and forecast_prob > 0.55) and (
                         rsi is not None and rsi > 70
                     ):
                         messages.append(f"📉 SELL {ticker} - Low forecast")

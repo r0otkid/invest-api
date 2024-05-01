@@ -9,13 +9,13 @@ const updateExchangeTimer = () => {
 
     if (now < openingTime) {
         targetTime = openingTime;
-        messagePrefix = "До открытия: ";
+        messagePrefix = "To open: ";
     } else if (now >= openingTime && now < closingTime) {
         targetTime = closingTime;
-        messagePrefix = "До закрытия: ";
+        messagePrefix = "To close: ";
     } else {
-        $('#exchange-timer').text("Биржа закрыта.");
-        return; // Заканчиваем функцию, если биржа закрыта
+        $('#exchange-timer').text("Stock closed.");
+        return;
     }
 
     const diff = targetTime - now;
@@ -30,9 +30,10 @@ const updateExchangeTimer = () => {
 $(document).ready(function () {
     updateExchangeTimer();
     setInterval(updateExchangeTimer, 1000);
-    $('#delete-acc').on('click', closeAllAccounts);
-    $('#open-acc').on('click', openAccount);
-    $('#add-money').on('click', addMoney);
+    $('#delete-acc').on('click', () => {
+        closeAllAccounts();
+        openAccount();
+    });
     getTariff().then(tariff => {
         $('#tariff').text(tariff.toUpperCase());
         sendMessage("🤖 Запущен бот-торговец, тариф: " + tariff.toUpperCase());

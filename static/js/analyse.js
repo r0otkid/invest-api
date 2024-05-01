@@ -24,6 +24,24 @@ function erfinv(x) {
     return z;
 }
 
+function calculateMarketVolatility(prices) {
+    let meanPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    let variance = prices.reduce((sum, price) => sum + Math.pow(price - meanPrice, 2), 0) / prices.length;
+    return Math.sqrt(variance);
+}
+
+function adjustWeights(weights, volatility) {
+    let adjustedWeights = { ...weights };
+    if (volatility > 1.5) { // это порог изменчивости, который считаем высоким
+        adjustedWeights.macd *= 1.2; // увеличиваем вес MACD
+        adjustedWeights.rsi *= 1.2; // увеличиваем вес RSI
+    } else {
+        adjustedWeights.sma *= 1.1; // увеличиваем вес SMA при низкой волатильности
+        adjustedWeights.wma *= 1.1; // увеличиваем вес WMA при низкой волатильности
+    }
+    return adjustedWeights;
+}
+
 function calculateSMA(prices, windowSize) {
     // Это базовый метод анализа временных рядов,
     // который сглаживает временные ряды данных,
@@ -194,7 +212,6 @@ function calculateCUSUM(prices) {
 }
 
 function calculateShapiroWilkTest(prices) {
-    // Это упрощенная реализация, фактический тест требует более сложных вычислений
     const n = prices.length;
     const mean = prices.reduce((sum, price) => sum + price, 0) / n;
     const s = Math.sqrt(prices.reduce((sum, price) => sum + Math.pow(price - mean, 2), 0) / n);
@@ -275,9 +292,13 @@ function calculateProbabilityOfGrowth(ticker) {
                 const currentPrices = prices.slice(lag); // Цены начиная со второго дня
                 const laggedPrices = prices.slice(0, -lag); // Цены до последнего дня
 
-                const sma = calculateSMA(prices, 5);
-                const ema = calculateEMA(prices, 5);
-                const wma = calculateWMA(prices, 5);
+                const sma = calculateSMA(prices, smaWindowSize);
+                const ema = calculateEMA(prices, emaPeriod);
+                const wma = calculateWMA(prices, wmaWindowSize);
+
+                const rsi = calculateRSI(prices, rsiPeriod);
+                console.log(rsi);
+                alert(rsi);
                 const macd = calculateMACD(prices);
                 const bollinger = calculateBollingerBands(prices);
                 const parabolicSAR = calculateParabolicSAR(prices);
@@ -296,7 +317,8 @@ function calculateProbabilityOfGrowth(ticker) {
                 const psarLast = parabolicSAR[parabolicSAR.length - 1];
 
                 // Веса для каждого индикатора
-                const weights = {
+                const volatility = calculateMarketVolatility(prices);
+                let weights = {
                     ema: 0.25,
                     macd: 0.20,
                     wma: 0.15,
@@ -311,6 +333,7 @@ function calculateProbabilityOfGrowth(ticker) {
                     spearman: 0.05,
                     dickeyFuller: 0.05
                 };
+                weights = adjustWeights(weights, volatility);
 
                 // Расчет сигналов
                 let weightedSum = 0;

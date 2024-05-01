@@ -1,6 +1,6 @@
 let db;
 const dbName = "QuotesDB";
-const index = 3;
+const index = 4;
 
 
 function openDatabase() {
@@ -11,12 +11,18 @@ function openDatabase() {
             const db = event.target.result;
             if (!db.objectStoreNames.contains("quotes")) {
                 const store = db.createObjectStore("quotes", { keyPath: "id", autoIncrement: true });
+                // Проверяем, существует ли уже индекс 'timestamp'
+                if (!store.indexNames.contains("timestamp")) {
+                    // Создаем новый индекс 'timestamp'
+                    store.createIndex("timestamp", "timestamp", { unique: false });
+                }
                 store.createIndex("ticker", "ticker", { unique: false }); // Создание индекса 'ticker'
             } else {
                 // Если хранилище уже существует, но нужно добавить новый индекс:
                 const store = transaction.objectStore("quotes");
                 if (!store.indexNames.contains("ticker")) {
                     store.createIndex("ticker", "ticker", { unique: false });
+                    store.createIndex("timestamp", "timestamp", { unique: false })
                 }
             }
         };
@@ -26,10 +32,27 @@ function openDatabase() {
         };
 
         request.onerror = function (event) {
-            // Логирование объекта ошибки, если он доступен, или event.target.error
             console.error("Database error: ", event.target.error ? event.target.error : event);
             reject(event.target.error ? event.target.error.message : "Unknown error occurred.");
         };
+    });
+}
+
+function countQuotes() {
+    openDatabase().then(db => {
+        const transaction = db.transaction(["quotes"], "readonly");
+        const store = transaction.objectStore("quotes");
+        const countRequest = store.count();
+
+        countRequest.onsuccess = function () {
+            $('#total-quotes').text(countRequest.result + " quoutes in DB");
+        };
+
+        countRequest.onerror = function (event) {
+            console.error("Error counting records:", event.target.errorCode);
+        };
+    }).catch(error => {
+        console.error("Error opening database:", error);
     });
 }
 
@@ -44,9 +67,6 @@ function addQuote(ticker, price) {
         };
 
         const request = store.add(quote);
-        request.onsuccess = function () {
-            // console.log("Quote added to the database", quote);
-        };
 
         request.onerror = function (event) {
             console.error("Error writing to the database", event.target.errorCode);
@@ -57,18 +77,13 @@ function addQuote(ticker, price) {
 }
 
 function deleteOldQuotes() {
-    if (!db) {
-        console.error("Database has not been initialized.");
-        return;
-    }
-
     openDatabase().then(db => {
         const oneHourAgo = new Date();
-        oneDayAgo.setHours(oneHourAgo.getHours() - 1);
+        oneHourAgo.setHours(oneHourAgo.getHours() - hoursToStore);
 
         const transaction = db.transaction(["quotes"], "readwrite");
         const store = transaction.objectStore("quotes");
-        const index = store.index("timestamp"); // Предполагается, что у вас есть индекс по временной метке
+        const index = store.index("timestamp");
 
         const range = IDBKeyRange.upperBound(oneHourAgo.getTime());
         const request = index.openCursor(range);
@@ -79,7 +94,7 @@ function deleteOldQuotes() {
                 store.delete(cursor.primaryKey);
                 cursor.continue();
             } else {
-                console.log("Old quotes deleted up to one month ago.");
+                console.log(`Old quotes deleted up to ${hoursToStore} hour ago.`);
             }
         };
 
@@ -97,7 +112,7 @@ function fetchAllTickerData() {
             const transaction = db.transaction(['quotes'], 'readonly');
             const store = transaction.objectStore('quotes');
             const index = store.index('ticker');
-            const request = index.getAll(); // Получаем все записи
+            const request = index.getAll();
 
             request.onsuccess = (event) => {
                 const records = event.target.result;
@@ -125,8 +140,8 @@ function fetchLatestTickerData() {
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(['quotes'], 'readonly');
             const store = transaction.objectStore('quotes');
-            const index = store.index('ticker'); // Используем индекс по полю 'ticker'
-            const request = index.openCursor(null, 'prev'); // Открываем курсор в обратном порядке
+            const index = store.index('ticker');
+            const request = index.openCursor(null, 'prev');
 
             let latestDataByTicker = {};
 
@@ -153,6 +168,45 @@ function fetchLatestTickerData() {
     });
 }
 
+function getDateRange() {
+    openDatabase().then(db => {
+        const transaction = db.transaction(["quotes"], "readonly");
+        const store = transaction.objectStore("quotes");
+        const index = store.index("timestamp");
+
+        const getMinRequest = index.openCursor(null, "next");
+        const getMaxRequest = index.openCursor(null, "prev");
+
+        let minDate, maxDate;
+
+        getMinRequest.onsuccess = function () {
+            if (getMinRequest.result) {
+                minDate = new Date(getMinRequest.result.value.timestamp);
+            }
+        };
+
+        getMaxRequest.onsuccess = function () {
+            if (getMaxRequest.result) {
+                maxDate = new Date(getMaxRequest.result.value.timestamp);
+            }
+        };
+
+        transaction.oncomplete = function () {
+            if (minDate && maxDate) {
+                const minuteDifference = Math.abs(maxDate.getTime() - minDate.getTime()) / 60000;
+                $('#date-range').text(`-for ${parseInt(minuteDifference)} min`);
+            }
+        };
+
+        transaction.onerror = function (event) {
+            console.error("Error fetching date range:", event.target.errorCode);
+        };
+    }).catch(error => {
+        console.error("Error opening database:", error);
+    });
+}
+
+
 async function generateData() {
     // для генерации тестовых данных в базе данных
     const db = await openDatabase();
@@ -177,10 +231,21 @@ async function generateData() {
             const change = 1 + (Math.random() - 0.5) / 10;
             price *= change;
 
+            const currentDate = new Date();
+
+            // Устанавливаем случайные часы, минуты, секунды и миллисекунды
+            currentDate.setHours(Math.floor(Math.random() * 24)); // От 0 до 23 часов
+            currentDate.setMinutes(Math.floor(Math.random() * 60)); // От 0 до 59 минут
+            currentDate.setSeconds(Math.floor(Math.random() * 60)); // От 0 до 59 секунд
+            currentDate.setMilliseconds(Math.floor(Math.random() * 1000)); // От 0 до 999 миллисекунд
+
+            // Получаем метку времени для новой случайной даты
+            const randomTimestamp = currentDate.getTime();
+
             const quote = {
                 ticker: ticker,
                 price: price,
-                timestamp: newDate.getTime()
+                timestamp: randomTimestamp
             };
             store.add(quote);
         }
