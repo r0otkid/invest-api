@@ -45,23 +45,23 @@ class TradeExecutor:
                         self.last_trades[ticker] = self.get_current_time()  # Обновляем время последней операции
                         # ПОКУПКА
                         if action == '📈':
-                            await create_order(account_id, amount, instrument['uid'], 'buy')
+                            resp = await create_order(account_id, amount, instrument['uid'], 'buy')
                             order = {
                                 'account_id': account_id,
                                 'lots': amount,
                                 'instrument_uid': instrument['uid'],
                                 'order_type': 'buy',
-                                'price': price,
+                                'price': resp.executed_order_price if 'executed_order_price' in resp else price,
                             }
                         # ПРОДАЖА
                         elif action == '📉':
-                            await create_order(account_id, amount, instrument['uid'], 'sell')
+                            resp = await create_order(account_id, amount, instrument['uid'], 'sell')
                             order = {
                                 'account_id': account_id,
                                 'lots': amount,
                                 'instrument_uid': instrument['uid'],
                                 'order_type': 'sell',
-                                'price': price,
+                                'price': resp.executed_order_price if 'executed_order_price' in resp else price,
                             }
                         await self.db.orders.insert_one(order)
                         logging.warning(f"Order for {action} {ticker} was created.")

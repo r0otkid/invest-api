@@ -1,3 +1,20 @@
+const openAccount = () => {
+    $.ajax({
+        url: '/open-sandbox-account',
+        type: 'GET',
+        success: (response) => {
+            addMoney();
+            localStorage.setItem('account_id', response.account_id);
+            alert('Аккаунт открыт.');
+        },
+        error: (error) => {
+            console.log('Ошибка при открытии аккаунта', error);
+            alert('Произошла ошибка при открытии аккаунта в песочнице.');
+        }
+    });
+}
+
+
 const closeAllAccounts = () => {
     $.ajax({
         url: '/close-all-sandbox-accounts',
@@ -5,6 +22,7 @@ const closeAllAccounts = () => {
         success: (response) => {
             console.log('Учетные записи удалены', response);
             alert('Все учетные записи успешно удалены.');
+            openAccount();
         },
         error: (error) => {
             console.log('Ошибка при удалении учетных записей', error);
@@ -15,8 +33,9 @@ const closeAllAccounts = () => {
 
 
 const addMoney = () => {
+    const accId = localStorage.getItem('account_id');
     $.ajax({
-        url: '/add-money?money=50000',
+        url: '/add-money?money=50000&account_id=' + accId,
         type: 'GET',
         success: (response) => {
             console.log('Баланс пополнен', response);
@@ -25,21 +44,6 @@ const addMoney = () => {
         error: (error) => {
             console.log('Ошибка при пополнении баланса', error);
             alert('Произошла ошибка при пополнении баланса.');
-        }
-    });
-}
-
-const openAccount = () => {
-    $.ajax({
-        url: '/open-sandbox-account',
-        type: 'GET',
-        success: (response) => {
-            addMoney();
-            alert('Аккаунт открыт.');
-        },
-        error: (error) => {
-            console.log('Ошибка при открытии аккаунта', error);
-            alert('Произошла ошибка при открытии аккаунта в песочнице.');
         }
     });
 }
@@ -139,7 +143,6 @@ const sendMarketData = (sl, tp) => {
                     forecastCell.css('color', 'rgb(38, 51, 55)');
                 }
                 displayPredicate(response.predicate);
-                loadOrders();
             },
             error: function (xhr, status, error) {
                 console.error("Ошибка при отправке данных на сервер: " + error);
@@ -217,7 +220,8 @@ const loadOrders = () => {
                         <td>${order.price}</td>
                         <td>${order.order_type}</td>
                         <td>${quantity}</td>
-                        <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : profit}</b> <code>RUB</code></td>
+                        <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : `${parseFloat(order.price * quantity).toFixed(2)}`}</b> <code>RUB</code></td>
+                        <td>${profit}</td>
                     </tr>
                 `);
             });

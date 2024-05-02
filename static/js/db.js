@@ -78,14 +78,14 @@ function addQuote(ticker, price) {
 
 function deleteOldQuotes() {
     openDatabase().then(db => {
-        const oneHourAgo = new Date();
-        oneHourAgo.setHours(oneHourAgo.getHours() - hoursToStore);
+        const oneMinuteAgo = new Date();
+        oneMinuteAgo.setMinutes(oneMinuteAgo.getMinutes() - hoursToStore);
 
         const transaction = db.transaction(["quotes"], "readwrite");
         const store = transaction.objectStore("quotes");
         const index = store.index("timestamp");
 
-        const range = IDBKeyRange.upperBound(oneHourAgo.getTime());
+        const range = IDBKeyRange.upperBound(oneMinuteAgo.getTime());
         const request = index.openCursor(range);
 
         request.onsuccess = function (event) {
@@ -93,8 +93,6 @@ function deleteOldQuotes() {
             if (cursor) {
                 store.delete(cursor.primaryKey);
                 cursor.continue();
-            } else {
-                console.log(`Old quotes deleted up to ${hoursToStore} hour ago.`);
             }
         };
 
@@ -194,7 +192,7 @@ function getDateRange() {
         transaction.oncomplete = function () {
             if (minDate && maxDate) {
                 const minuteDifference = Math.abs(maxDate.getTime() - minDate.getTime()) / 60000;
-                $('#date-range').text(`-for ${parseInt(minuteDifference)} min`);
+                $('#date-range').text(`for ${parseInt(minuteDifference)} min`);
             }
         };
 

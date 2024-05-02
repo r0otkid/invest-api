@@ -27,7 +27,10 @@ async def create_market_order(account_id: str, instrument_id: str, quantity: int
             logging.error(f"Error while creating order: {e}")
             return {"error": str(e)}
         if order_response.execution_report_status == OrderExecutionReportStatus.EXECUTION_REPORT_STATUS_FILL:
-            return {"message": f"Order for {direction} was executed successfully, order_id: {order_response.order_id}"}
+            return {
+                "executed_order_price": order_response.executed_order_price,
+                "message": f"Order for {direction} was executed successfully, order_id: {order_response.order_id}",
+            }
         else:
             return {"error": f"Order for {direction} was not executed", "details": order_response.message}
 

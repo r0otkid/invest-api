@@ -97,9 +97,7 @@ const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
         // Иначе обновляем существующую строку
         updateExistingRow(instrument, stockRow, closePrice);
     }
-    deleteOldQuotes();
     addQuote(instrument.ticker, closePrice);
-
 };
 
 const collectAnalyticsData = () => {
@@ -142,6 +140,17 @@ const displayPredicate = (predicates) => {
         }).join('');
         $currentState.html(formattedPredicates).delay(500).fadeOut(500, () => {
             $currentState.show().css('opacity', '');
+        });
+        getAllSecurities().then(securities => {
+            $('#stock-widget tbody tr').each(function () {
+                $(this).find('td:eq(2)').empty();
+            });
+            loadSecurities();
+            loadOrders();
+            refreshBalance();
+
+        }).catch(error => {
+            console.error('👺 Ошибка при загрузке бумаг:', error);
         });
     } else {
         // Если предложений нет, показываем пустое состояние или сообщение по умолчанию

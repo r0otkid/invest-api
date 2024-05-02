@@ -1,3 +1,4 @@
+import asyncio
 import logging
 import motor.motor_asyncio
 import os
@@ -22,7 +23,7 @@ from api.order import buy_order_create, get_all_orders, sell_order_create
 from strategy.strategy2 import TradingStrategy
 from support.calculator import BalanceCalculator
 from support.executor import TradeExecutor
-from utils import get_account_id, get_instruments, process_forecast
+from utils import get_account_id, get_instruments, process_forecast, money_value_to_rub
 
 # Создание подключения к MongoDB
 client = motor.motor_asyncio.AsyncIOMotorClient('mongodb://localhost:27017')
@@ -30,21 +31,22 @@ db = client.tin
 
 routes = web.RouteTableDef()
 
-
 INSTRUMENTS = [
     "BBG004730N88",  # SBER
     "BBG00475K2X9",  # HYDR
     "BBG004S68473",  # IRAO
     "BBG004730ZJ9",  # VTBR
     "BBG0100R9963",  # SGZH
-    "BBG004S689R0",  # PHOR
+    # "BBG004S689R0",  # PHOR
     # "TCS00A107RM8",  # ZAYMER
     "BBG004731489",  # GMKN
+    "BBG000VFX6Y4",  # GLTR
+    "BBG004S68B31",  # ALRS
     "TCS00A105EX7",
     # фонды
     "BBG333333333",  # TMOS
-    # "TCS10A101X50",
-    # "TCS00A107597",
+    "TCS10A101X50",
+    "TCS00A107597",
 ]
 
 
@@ -57,7 +59,10 @@ async def create_order(account_id, amount, instrument_id, order_type):
         response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
     else:
         response = await sell_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
-    return web.json_response(response)
+    logging.warning(response)
+    money_value = response['executed_order_price']
+
+    return web.json_response(money_value_to_rub(money_value=money_value))
 
 
 @routes.get("/")
@@ -132,12 +137,14 @@ async def open_sanbox_acc_handler(request):
     await db.account.delete_many({})
     account_id = await open_sandbox_account()
     await db.account.insert_one({'account_id': account_id})
-    return web.json_response(account_id)
+    return web.json_response({'account_id': account_id})
 
 
 @routes.get("/close-all-sandbox-accounts")
 async def close_all_sanbox_acc_handler(request):
     await db.account.delete_many({})
+    await db.orders.delete_many({})
+    await db.market_data.delete_many({})
     return web.json_response(await close_all_sanbox_accounts())
 
 
@@ -145,11 +152,7 @@ async def close_all_sanbox_acc_handler(request):
 async def add_money_handler(request) -> Optional[int]:
     account_id = request.query.get("account_id")
     money = request.query.get("money", 10000)
-
-    if not account_id:
-        account_id = await get_account_id(accounts=await get_accounts())
-
-    result = await add_money_sandbox(account_id=account_id, money=money) if account_id else None
+    result = await add_money_sandbox(account_id=account_id, money=int(money)) if account_id else None
     return web.json_response(result.balance.units if result else None)
 
 

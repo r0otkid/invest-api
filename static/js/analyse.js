@@ -297,8 +297,6 @@ function calculateProbabilityOfGrowth(ticker) {
                 const wma = calculateWMA(prices, wmaWindowSize);
 
                 const rsi = calculateRSI(prices, rsiPeriod);
-                console.log(rsi);
-                alert(rsi);
                 const macd = calculateMACD(prices);
                 const bollinger = calculateBollingerBands(prices);
                 const parabolicSAR = calculateParabolicSAR(prices);
@@ -323,7 +321,7 @@ function calculateProbabilityOfGrowth(ticker) {
                     macd: 0.20,
                     wma: 0.15,
                     sma: 0.10,
-                    rsi: 0.10,
+                    rsi: 0.15,
                     bollinger: 0.10,
                     stochastic: 0.10,
                     regression: 0.10,
@@ -350,6 +348,8 @@ function calculateProbabilityOfGrowth(ticker) {
                 weightedSum += (shapiroWilk < 0.95) * weights.shapiroWilk;
                 weightedSum += (spearman > 0.5) * weights.spearman;
                 weightedSum += (dickeyFuller < -2.89) * weights.dickeyFuller;
+                weightedSum += (rsi > 70) * weights.rsi;
+                weightedSum += (rsi < 30) * -weights.rsi;
 
                 // Суммируем все веса
                 Object.values(weights).forEach(weight => weightTotal += weight);

@@ -1,3 +1,4 @@
+import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.instrument import get_instrument_by_id
@@ -37,9 +38,10 @@ class BalanceCalculator:
         if amount_for_buy == 0:
             amount_for_buy = int(money_balance / price / lot / 3)
 
+        logging.warning(f"1 Amount for buy: {amount_for_buy}")
         if amount_for_buy * price * lot > money_balance:
             amount_for_buy = 0
-
+        logging.warning(f"2 Amount for buy: {amount_for_buy}")
         return amount_for_buy
 
     async def get_amount_for_sell(self, instrument_id: str, stop_loss_take_profit: bool = False) -> int:

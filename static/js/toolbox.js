@@ -32,7 +32,6 @@ $(document).ready(function () {
     setInterval(updateExchangeTimer, 1000);
     $('#delete-acc').on('click', () => {
         closeAllAccounts();
-        openAccount();
     });
     getTariff().then(tariff => {
         $('#tariff').text(tariff.toUpperCase());

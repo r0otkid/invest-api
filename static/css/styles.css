@@ -423,7 +423,6 @@ label {
     border: 2px solid #2b2b2b;
 }
 
-
 #orders-table {
     width: 100%;
     height: 300px;
@@ -468,5 +467,20 @@ label {
 #date-range {
     font-size: 10px;
     color: #5b9d63;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#analytics-settings {
+    display: none;
+}
+
+#accordion {
+    width: 100%;
+    text-align: right;
+    margin-bottom: 10px;
+    color: #abb2bf;
+    cursor: pointer;
+    font-size: 14pt;
+    opacity: 0.8;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
 }

@@ -6,6 +6,7 @@
     <title>Stock Widget</title>
     <link rel="stylesheet" href="static/css/styles.css" />
     <link rel="stylesheet" href="static/css/data-tables.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   </head>
 
   <body>
@@ -53,44 +54,47 @@
         <input type="number" id="sl" value="0.25" placeholder="%" />
         <label for="tp">Take Profit</label>
         <input type="number" id="tp" value="0.15" placeholder="%" />
-        <br />
-        <label for="intervalSlider">Market data interval:</label>
-        <input type="range" id="intervalSlider" min="1" max="60" value="6" class="slider" />
-        <div id="intervalDisplay">6 sec</div>
+        <div id="accordion">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+        <div id="analytics-settings">
+          <label for="intervalSlider">Market data interval:</label>
+          <input type="range" id="intervalSlider" min="1" max="60" value="4" class="slider" />
+          <div id="intervalDisplay">4 sec</div>
 
-        <label for="hoursToStore">Hours to store:</label>
-        <input type="range" id="hoursToStore" min="1" max="184" value="12" class="slider" />
-        <div id="intervalStoring">1 hour</div>
-        <div class="parameters">
-          <!-- SMA -->
-          <div class="parameter">
-            <label for="smaSlider">SMA Window Size:</label>
-            <input type="range" id="smaSlider" min="1" max="100" value="10" class="slider" />
-            <span id="smaValue">10 items</span>
-          </div>
+          <label for="hoursToStore">Minutes to store:</label>
+          <input type="range" id="hoursToStore" min="1" max="10" value="2" class="slider" />
+          <div id="intervalStoring">2 min</div>
+          <div class="parameters">
+            <!-- SMA -->
+            <div class="parameter">
+              <label for="smaSlider">SMA Window Size:</label>
+              <input type="range" id="smaSlider" min="1" max="24" value="4" class="slider" />
+              <span id="smaValue">4 items</span>
+            </div>
 
-          <!-- EMA -->
-          <div class="parameter">
-            <label for="emaSlider">EMA Period:</label>
-            <input type="range" id="emaSlider" min="1" max="100" value="10" class="slider" />
-            <span id="emaValue">10 items</span>
-          </div>
+            <!-- EMA -->
+            <div class="parameter">
+              <label for="emaSlider">EMA Period:</label>
+              <input type="range" id="emaSlider" min="1" max="24" value="4" class="slider" />
+              <span id="emaValue">4 items</span>
+            </div>
 
-          <!-- WMA -->
-          <div class="parameter">
-            <label for="wmaSlider">WMA Window Size:</label>
-            <input type="range" id="wmaSlider" min="1" max="100" value="10" class="slider" />
-            <span id="wmaValue">10 items</span>
-          </div>
+            <!-- WMA -->
+            <div class="parameter">
+              <label for="wmaSlider">WMA Window Size:</label>
+              <input type="range" id="wmaSlider" min="1" max="10" value="5" class="slider" />
+              <span id="wmaValue">5 items</span>
+            </div>
 
-          <!-- RSI -->
-          <div class="parameter">
-            <label for="rsiSlider">RSI Period:</label>
-            <input type="range" id="rsiSlider" min="1" max="50" value="14" class="slider" />
-            <span id="rsiValue">14 items</span>
+            <!-- RSI -->
+            <div class="parameter">
+              <label for="rsiSlider">RSI Period:</label>
+              <input type="range" id="rsiSlider" min="1" max="48" value="6" class="slider" />
+              <span id="rsiValue">6 items</span>
+            </div>
           </div>
         </div>
-
         <button style="float: right; margin-top: 5px;" class="btn blue" id="start">Start Bot</button>
       </div>
     </div>
@@ -120,6 +124,7 @@
               <th>Price</th>
               <th>Operation</th>
               <th>Quantity</th>
+              <th>Amount</th>
               <th>Profit</th>
             </tr>
           </thead>
@@ -130,7 +135,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/libraries/chart.js"></script>
 
     <script>
       let isBotStarted = false;
@@ -167,7 +172,7 @@
           $('#current-state').html('Ready to start').css('color', 'green')
           clearInterval(intervalId)
         } else {
-          $('#start').css('display', 'block')  // todo: display -> none
+          $('#start').css('display', 'none')  // todo: display -> none
           $('#current-state').html('Loading...').css('color', 'dodgerblue')
         }
       }
@@ -179,20 +184,7 @@
       
         marketDataIntervalId = setInterval(() => {
           sendMarketData($('#sl').val(), $('#tp').val());
-          loadSecurities();
-          refreshBalance();
-          getAllSecurities().then(securities => {
-            $('#stock-widget tbody tr').each(function() {
-              $(this).find('td:eq(2)').empty();
-            });
-            securities.forEach(security => {
-              const uid = security.instrument_uid;
-              const balance = security.balance;
-              $(`#securities-${uid}`).html(balance);
-            });
-          }).catch(error => {
-            console.error('👺 Ошибка при загрузке бумаг:', error);
-          });
+          deleteOldQuotes();
         }, marketDataInterval);
       };
       
@@ -202,7 +194,7 @@
       });
       $('#hoursToStore').on('input', function() {
         hoursToStore = $(this).val();
-        $('#intervalStoring').text($(this).val() + ' hours');
+        $('#intervalStoring').text($(this).val() + ' min');
       });
       const stopSendingMarketData = () => {
           if (marketDataIntervalId) {
@@ -247,7 +239,7 @@
           $('#clear-data').on('click', () => {
             deleteOldQuotes();
           });
-
+          deleteOldQuotes();
           const rsiValue = $('#rsiValue');
           const smaValue = $('#smaValue');
           const emaValue = $('#emaValue');
@@ -280,6 +272,16 @@
               rsiPeriod = parseInt($(this).val());
               rsiValue.text(rsiPeriod) + "items";
           });
+
+          $('#accordion').click(function() {
+            $('#analytics-settings').toggle();
+            var icon = $(this).find('i');
+            if (icon.hasClass('fa-chevron-down')) {
+                icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+            } else {
+                icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+            }
+        });
           setupAutomaticUpdates();
         })
     </script>

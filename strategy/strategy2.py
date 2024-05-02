@@ -84,7 +84,6 @@ class TradingStrategy:
             # Рассчитать процент изменения цены
             price_change = (current_price - buy_price) / buy_price * 100
 
-            logging.warning(f"Price change for {ticker}: {price_change:.2f}%")
             security_obj = await self.db.securities.find_one({})
             securities = security_obj.get('securities', []) if security_obj else []
 
@@ -100,14 +99,18 @@ class TradingStrategy:
                 messages.append(f"📉 SELL {ticker} - Take Profit")
             else:
                 if sma is not None and ema is not None:
-                    if (current_price > ema and current_price > sma and forecast_prob > 0.37) and (
-                        rsi is not None and rsi < 30
-                    ):
-                        messages.append(f"📈 BUY {ticker} - Good forecast")
+                    if (
+                        current_price > ema
+                        and current_price > sma
+                        and forecast_prob > 0.5
+                        and rsi is not None
+                        and rsi < 65
+                    ) or (rsi is not None and rsi < 30):
+                        messages.append(f"📈 BUY {ticker}")
                     elif (current_price < ema and current_price < sma and forecast_prob > 0.55) and (
-                        rsi is not None and rsi > 70
+                        rsi is not None and rsi > 80
                     ):
-                        messages.append(f"📉 SELL {ticker} - Low forecast")
+                        messages.append(f"📉 SELL {ticker}")
                     else:
                         messages.append(f"⏳ HOLD {ticker} - No clear action")
         return messages
