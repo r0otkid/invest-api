@@ -77,9 +77,9 @@ class TradingStrategy:
             forecast_prob = self.forecast.get(ticker, 0)
             prices = trends.get(ticker, [])
 
-            sma = self.calculate_sma(prices, period=5)  # 5-дневный SMA
-            ema = self.calculate_ema(prices, period=5)  # 5-дневный EMA
-            rsi = self.calculate_rsi(prices, period=10)
+            sma = self.calculate_sma(prices, period=12)
+            ema = self.calculate_ema(prices, period=12)
+            rsi = self.calculate_rsi(prices, period=24)
 
             # Рассчитать процент изменения цены
             price_change = (current_price - buy_price) / buy_price * 100
@@ -91,24 +91,20 @@ class TradingStrategy:
             for sec in securities:
                 if sec['instrument_uid'] == instrument['uid']:
                     sec_balance = sec['balance']
-            sl = self.sl if instrument['instrument_type'] == 'share' else self.sl / 10
-            tp = self.tp if instrument['instrument_type'] == 'share' else self.tp / 10
+            sl = self.sl if instrument['instrument_type'] == 'share' else self.sl / 3
+            tp = self.tp if instrument['instrument_type'] == 'share' else self.tp / 3
             if price_change <= -sl and sec_balance > 0:
                 messages.append(f"📉 SELL {ticker} - Stop Loss")
             elif price_change >= tp and sec_balance > 0:
                 messages.append(f"📉 SELL {ticker} - Take Profit")
             else:
                 if sma is not None and ema is not None:
-                    if (
-                        current_price > ema
-                        and current_price > sma
-                        and forecast_prob > 0.5
-                        and rsi is not None
-                        and rsi < 65
-                    ) or (rsi is not None and rsi < 30):
+                    if (current_price > ema and current_price > sma and forecast_prob >= 0.6) or (
+                        rsi is not None and rsi < 50
+                    ):
                         messages.append(f"📈 BUY {ticker}")
-                    elif (current_price < ema and current_price < sma and forecast_prob > 0.55) and (
-                        rsi is not None and rsi > 80
+                    elif (current_price < ema and current_price < sma and forecast_prob >= 0.6) and (
+                        rsi is not None and rsi > 70
                     ):
                         messages.append(f"📉 SELL {ticker}")
                     else:

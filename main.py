@@ -121,9 +121,13 @@ async def marketData(request):
     predicates = await strategy.make_predicate()
 
     executor = TradeExecutor(db=db, calculator=calculator, sl=sl, tp=tp)
-    await executor.execute_trades(predicates=predicates, market_data=new_data['marketData'], create_order=create_order)
+    order_was_created = await executor.execute_trades(
+        predicates=predicates, market_data=new_data['marketData'], create_order=create_order
+    )
 
-    return web.json_response({'forecast_results': forecast_results, 'predicate': predicates})
+    return web.json_response(
+        {'forecast_results': forecast_results, 'predicate': predicates, 'order': order_was_created}
+    )
 
 
 @routes.get("/accounts")

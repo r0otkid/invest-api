@@ -34,14 +34,22 @@ class BalanceCalculator:
         """Возвращает количество акций для покупки"""
         lot = await self.get_lot_quantity(instrument_id=instrument_id)
         money_balance = await self.get_money()
-        amount_for_buy = int(money_balance / price / lot / 6)
+
+        amount_for_buy = int(money_balance / price / lot / 12)
+        if amount_for_buy == 0:
+            amount_for_buy = int(money_balance / price / lot / 9)
+        if amount_for_buy == 0:
+            amount_for_buy = int(money_balance / price / lot / 6)
         if amount_for_buy == 0:
             amount_for_buy = int(money_balance / price / lot / 3)
+        if amount_for_buy == 0:
+            amount_for_buy = int(money_balance / price / lot / 2)
+        if amount_for_buy == 0:
+            amount_for_buy = int(money_balance / price / lot)
 
-        logging.warning(f"1 Amount for buy: {amount_for_buy}")
-        if amount_for_buy * price * lot > money_balance:
+        if amount_for_buy * price * lot >= money_balance:
             amount_for_buy = 0
-        logging.warning(f"2 Amount for buy: {amount_for_buy}")
+
         return amount_for_buy
 
     async def get_amount_for_sell(self, instrument_id: str, stop_loss_take_profit: bool = False) -> int:

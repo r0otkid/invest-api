@@ -62,13 +62,13 @@ const updateExistingRow = (instrument, stockRow, closePrice) => {
             $(`#stock-${tickerToSell}`).find('td:eq(1)').css('color', 'rgb(255, 107, 53)');
 
             // analytics
-            analyzeAllTickers().then(
-                analyze => {
-                    stockRow.find('td:eq(3)').html(
-                        `${analyze[instrument.ticker]} %`
-                    );
-                }
-            )
+            // analyzeAllTickers().then(
+            //     analyze => {
+            //         stockRow.find('td:eq(3)').html(
+            //             `${analyze[instrument.ticker]} %`
+            //         );
+            //     }
+            // )
         }
     ).catch(error => {
         console.error('Ошибка при выполнении selectBestTradingOptions:', error);
@@ -140,17 +140,6 @@ const displayPredicate = (predicates) => {
         }).join('');
         $currentState.html(formattedPredicates).delay(500).fadeOut(500, () => {
             $currentState.show().css('opacity', '');
-        });
-        getAllSecurities().then(securities => {
-            $('#stock-widget tbody tr').each(function () {
-                $(this).find('td:eq(2)').empty();
-            });
-            loadSecurities();
-            loadOrders();
-            refreshBalance();
-
-        }).catch(error => {
-            console.error('👺 Ошибка при загрузке бумаг:', error);
         });
     } else {
         // Если предложений нет, показываем пустое состояние или сообщение по умолчанию

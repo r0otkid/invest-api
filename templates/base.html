@@ -13,7 +13,7 @@
     <div class="content">
       <div class="toolbox">
         <div>
-          <span id="status" class="red">&nbsp;</span>[<code id="tariff"></code>]
+          <span id="status" class="red">&nbsp;</span>[<code id="tariff"></code>]<div id="acc-id"></div>
         </div>
         <div>
           <button class="btn" id="delete-acc">🔨 Reload</button>
@@ -38,9 +38,7 @@
               <th style="text-align: center;">Price (RUB)</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- Данные будут добавляться сюда динамически -->
-          </tbody>
+          <tbody></tbody>
         </table>
       </div>
     </div>
@@ -51,47 +49,47 @@
       </div>
       <div class="orders">
         <label for="sl">Stop Loss</label>
-        <input type="number" id="sl" value="0.25" placeholder="%" />
+        <input type="number" id="sl" value="0.35" placeholder="%" />
         <label for="tp">Take Profit</label>
-        <input type="number" id="tp" value="0.15" placeholder="%" />
+        <input type="number" id="tp" value="0.25" placeholder="%" />
         <div id="accordion">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div id="analytics-settings">
           <label for="intervalSlider">Market data interval:</label>
-          <input type="range" id="intervalSlider" min="1" max="60" value="4" class="slider" />
-          <div id="intervalDisplay">4 sec</div>
+          <input type="range" id="intervalSlider" min="1" max="60" value="2" class="slider" />
+          <div id="intervalDisplay">2 sec</div>
 
           <label for="hoursToStore">Minutes to store:</label>
-          <input type="range" id="hoursToStore" min="1" max="10" value="2" class="slider" />
-          <div id="intervalStoring">2 min</div>
+          <input type="range" id="hoursToStore" min="1" max="10" value="5" class="slider" />
+          <div id="intervalStoring">5 min</div>
           <div class="parameters">
             <!-- SMA -->
             <div class="parameter">
               <label for="smaSlider">SMA Window Size:</label>
-              <input type="range" id="smaSlider" min="1" max="24" value="4" class="slider" />
-              <span id="smaValue">4 items</span>
+              <input type="range" id="smaSlider" min="1" max="24" value="6" class="slider" />
+              <span id="smaValue">6 items</span>
             </div>
 
             <!-- EMA -->
             <div class="parameter">
               <label for="emaSlider">EMA Period:</label>
-              <input type="range" id="emaSlider" min="1" max="24" value="4" class="slider" />
-              <span id="emaValue">4 items</span>
+              <input type="range" id="emaSlider" min="1" max="24" value="6" class="slider" />
+              <span id="emaValue">6 items</span>
             </div>
 
             <!-- WMA -->
             <div class="parameter">
               <label for="wmaSlider">WMA Window Size:</label>
-              <input type="range" id="wmaSlider" min="1" max="10" value="5" class="slider" />
-              <span id="wmaValue">5 items</span>
+              <input type="range" id="wmaSlider" min="1" max="10" value="6" class="slider" />
+              <span id="wmaValue">6 items</span>
             </div>
 
             <!-- RSI -->
             <div class="parameter">
               <label for="rsiSlider">RSI Period:</label>
-              <input type="range" id="rsiSlider" min="1" max="48" value="6" class="slider" />
-              <span id="rsiValue">6 items</span>
+              <input type="range" id="rsiSlider" min="1" max="48" value="12" class="slider" />
+              <span id="rsiValue">12 items</span>
             </div>
           </div>
         </div>
@@ -176,17 +174,8 @@
           $('#current-state').html('Loading...').css('color', 'dodgerblue')
         }
       }
-      const intervalId = setInterval(checkRowsAndShowButton, 1000)
+      const intervalId = setInterval(checkRowsAndShowButton, 3000)
 
-      // Установка и удаление интервала отправки данных на сервер
-      const sendMarketDataWithInterval = () => {
-        if (marketDataIntervalId) clearInterval(marketDataIntervalId);
-      
-        marketDataIntervalId = setInterval(() => {
-          sendMarketData($('#sl').val(), $('#tp').val());
-          deleteOldQuotes();
-        }, marketDataInterval);
-      };
       
       $('#intervalSlider').on('input', function() {
         marketDataInterval = $(this).val() * 1000; // Обновляем интервал в миллисекундах
@@ -196,13 +185,6 @@
         hoursToStore = $(this).val();
         $('#intervalStoring').text($(this).val() + ' min');
       });
-      const stopSendingMarketData = () => {
-          if (marketDataIntervalId) {
-              clearInterval(marketDataIntervalId);
-              marketDataIntervalId = null;
-              console.log("Отправка данных на сервер остановлена.");
-          }
-      }
     </script>
 
     <script src="/static/js/db.js"></script>
@@ -224,15 +206,66 @@
         );
 
         $(document).ready(function () {
+          // Установка и удаление интервала отправки данных на сервер
+          const sendMarketDataWithInterval = () => {
+            if (marketDataIntervalId) clearInterval(marketDataIntervalId);
+          
+            marketDataIntervalId = setInterval(() => {
+              sendMarketData($('#sl').val(), $('#tp').val());
+              deleteOldQuotes();
+              instruments.forEach(instrument => {
+                const stockRow = $(`#stock-${instrument.ticker}`);
+                analyzeAllTickers().then(
+                  analyze => {
+                      stockRow.find('td:eq(3)').text(
+                          `${analyze[instrument.ticker]} %`
+                      );
+                  }
+                )
+              });
+            }, marketDataInterval);
+          };
+          const stopSendingMarketData = () => {
+            if (marketDataIntervalId) {
+                clearInterval(marketDataIntervalId);
+                marketDataIntervalId = null;
+                console.log("Отправка данных на сервер остановлена.");
+            }
+          }
+
           fetchAllTickerData().then(dataByTicker => {
               createCharts(dataByTicker);
           }).catch(error => {
               console.error('Error creating charts:', error);
           });
 
+          $('#start').on('click', () => {
+            currentState.html('Загрузка...').css('color', 'darkseagreen');
+            startBot(sendMarketDataWithInterval, stopSendingMarketData);
+            loadOrders();
+          })
+    
+
+          const secBalance = $('#sec-balance');
+          const totalBalance = $('#total-balance');
+
           balance.css('cursor', 'pointer');
           $('#start').css('display', 'none');
 
+          balance.on('DOMSubtreeModified', function() {
+            totalBalance.text(
+              parseFloat(
+                parseFloat(balance.text()) + parseFloat(secBalance.text())
+              ).toFixed(2)
+            );
+          });
+          secBalance.on('DOMSubtreeModified', function() {
+            totalBalance.text(
+              parseFloat(
+                parseFloat(balance.text()) + parseFloat(secBalance.text())
+              ).toFixed(2)
+            );
+          });
           balance.click(() => refreshBalance());
 
           $('#generate-data').click(() => generateData() && window.location.reload());

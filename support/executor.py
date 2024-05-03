@@ -1,3 +1,4 @@
+import time
 import logging
 from typing import Callable
 
@@ -5,16 +6,55 @@ from api.account import get_account_positions, get_balance
 from support.calculator import BalanceCalculator
 
 
+class StopLoss:
+    def __init__(self, db, sl: float) -> None:
+        self.db = db
+        self.sl = sl
+
+    async def check_loss(self, price: float, amount: int, instrument_uid: str) -> int:
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
+        last_five_buy_orders = await cursor.to_list(length=None)
+        average_price = sum([order['price'] for order in last_five_buy_orders]) / 5
+        if average_price > price:
+            current_cost = price * amount
+            buy_cost = average_price * amount
+            loss_percent = ((buy_cost - current_cost) / buy_cost) * 100
+            if loss_percent > self.sl:
+                return amount
+            return 0
+        return amount
+
+
+class TakeProfit:
+    def __init__(self, db, tp: float) -> None:
+        self.db = db
+        self.tp = tp
+
+    async def check_profit(self, price: float, amount: int, instrument_uid: str) -> int:
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
+        last_five_buy_orders = await cursor.to_list(length=None)
+        average_price = sum([order['price'] for order in last_five_buy_orders]) / 5
+        if average_price > price:
+            current_profit = price * amount
+            sell_profit = average_price * amount
+            profit_percent = ((current_profit - sell_profit) / sell_profit) * 100
+            if profit_percent > self.tp:
+                return amount
+            return 0
+        return amount
+
+
 class TradeExecutor:
     def __init__(self, db, calculator: BalanceCalculator, sl: float, tp: float):
         self.sl = sl
         self.tp = tp
         self.db = db
-        self.last_trades = {}
         self.calculator = calculator
+        self.stop_loss = StopLoss(db, sl)
+        self.take_profit = TakeProfit(db, tp)
 
     async def get_last_order(self, instrument_uid):
-        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', 1).limit(1)
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(1)
         last_order = await cursor.to_list(length=1)
         if last_order:
             return last_order[0]
@@ -26,7 +66,8 @@ class TradeExecutor:
         predicates,
         market_data: dict,
         create_order: Callable,
-    ):
+    ) -> bool:
+        order_was_created = False
         for predicate in predicates:
             parts = predicate.split()
             action = parts[0]  # Должно быть 📈 BUY или 📉 SELL
@@ -36,15 +77,20 @@ class TradeExecutor:
             account_id = account['account_id']
             if instrument and action in ['📈', '📉']:
                 logging.warning(f'Get recommendation: {action} {ticker}')
+                last_order = await self.get_last_order(instrument['uid'])
                 # Проверяем, когда в последний раз выполнялась операция по этому тикеру
-                if ticker not in self.last_trades or self._can_trade_again(instrument['uid']):
+                if not last_order or self._can_trade_again(last_order['timestamp']):
                     price = market_data.get(ticker, {}).get('price', 0)
                     amount = await self._calculate_amount(action, instrument['uid'], price)
-                    logging.warning(f"Amount for {action} {ticker}: {amount}")
+                    is_sell = action == '📉'
+                    is_buy = action == '📈'
+                    if is_sell:
+                        amount = await self.stop_loss.check_loss(price, amount, instrument['uid'])
+                        amount = await self.take_profit.check_profit(price, amount, instrument['uid'])
+
                     if amount > 0:
-                        self.last_trades[ticker] = self.get_current_time()  # Обновляем время последней операции
                         # ПОКУПКА
-                        if action == '📈':
+                        if is_buy:
                             resp = await create_order(account_id, amount, instrument['uid'], 'buy')
                             order = {
                                 'account_id': account_id,
@@ -54,7 +100,7 @@ class TradeExecutor:
                                 'price': resp.executed_order_price if 'executed_order_price' in resp else price,
                             }
                         # ПРОДАЖА
-                        elif action == '📉':
+                        elif is_sell:
                             resp = await create_order(account_id, amount, instrument['uid'], 'sell')
                             order = {
                                 'account_id': account_id,
@@ -63,7 +109,9 @@ class TradeExecutor:
                                 'order_type': 'sell',
                                 'price': resp.executed_order_price if 'executed_order_price' in resp else price,
                             }
+                        order['timestamp'] = time.time()
                         await self.db.orders.insert_one(order)
+                        order_was_created = True
                         logging.warning(f"Order for {action} {ticker} was created.")
 
                         # обновляем баланс и securities
@@ -86,10 +134,12 @@ class TradeExecutor:
                         logging.warning(f"Amount for {action} {ticker} is zero.")
                 else:
                     logging.warning(f"Cannot trade {ticker} again so soon.")
+        return order_was_created
 
-    def _can_trade_again(self, instrument_uid):
+    def _can_trade_again(self, last_trade_timestamp):
         # Проверяем, прошло ли достаточно времени с последней торговой операции
-        time_elapsed = self.get_current_time() - self.last_trades[instrument_uid]
+        current_time = self.get_current_time()
+        time_elapsed = current_time - last_trade_timestamp
         return time_elapsed > 60  # секунд
 
     @staticmethod
@@ -117,6 +167,4 @@ class TradeExecutor:
 
     @staticmethod
     def get_current_time():
-        import time
-
-        return int(time.time())
+        return time.time()

@@ -25,21 +25,17 @@ function createTabs(dataByTicker) {
     const contentContainer = tabsContainer.querySelector('.tab-content');
 
     Object.keys(dataByTicker).forEach((ticker, index) => {
-        // Создание кнопки для таба
         const button = document.createElement('button');
         button.textContent = ticker;
         button.addEventListener('click', () => setActiveTab(index));
         buttonsContainer.appendChild(button);
 
-        // Создание панели для графика
         const panel = document.createElement('div');
         panel.className = 'content-panel';
         contentContainer.appendChild(panel);
 
         const canvas = document.createElement('canvas');
         panel.appendChild(canvas);
-        // Здесь ваш код для инициализации графика...
-
         if (index === 0) {
             button.classList.add('active');
             panel.classList.add('active');
@@ -75,7 +71,6 @@ function updateChart(ticker, price, timestamp) {
         return;
     }
 
-    // Преобразование временной метки в читаемый формат
     const label = new Date(timestamp).toLocaleTimeString();
 
     // Добавление новых данных
@@ -84,8 +79,8 @@ function updateChart(ticker, price, timestamp) {
         dataset.data.push(price);
     });
 
-    // Удаление старых данных, чтобы на графике было не более 50 точек
-    while (chartInstance.data.labels.length > 50) {
+    // Удаление старых данных, чтобы на графике было не более 100 точек
+    while (chartInstance.data.labels.length > 100) {
         chartInstance.data.labels.shift();
         chartInstance.data.datasets.forEach((dataset) => {
             dataset.data.shift();

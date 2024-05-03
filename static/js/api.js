@@ -3,9 +3,7 @@ const openAccount = () => {
         url: '/open-sandbox-account',
         type: 'GET',
         success: (response) => {
-            addMoney();
-            localStorage.setItem('account_id', response.account_id);
-            alert('Аккаунт открыт.');
+            addMoney(response.account_id, 50000);
         },
         error: (error) => {
             console.log('Ошибка при открытии аккаунта', error);
@@ -21,7 +19,6 @@ const closeAllAccounts = () => {
         type: 'GET',
         success: (response) => {
             console.log('Учетные записи удалены', response);
-            alert('Все учетные записи успешно удалены.');
             openAccount();
         },
         error: (error) => {
@@ -32,18 +29,20 @@ const closeAllAccounts = () => {
 }
 
 
-const addMoney = () => {
-    const accId = localStorage.getItem('account_id');
+const addMoney = (account_id, amount = 10000) => {
     $.ajax({
-        url: '/add-money?money=50000&account_id=' + accId,
+        url: `/add-money?money=${amount}&account_id=${account_id}`,
         type: 'GET',
         success: (response) => {
-            console.log('Баланс пополнен', response);
+            $('#current-state').html(`Balance filled: ${amount} RUB`);
+            $('#acc-id').html(account_id);
+            $('#acc-id').css('color', 'seagreen');
             refreshBalance();
         },
         error: (error) => {
+            $('#current-state').html(`Error: ${error}`);
+            $('#current-state').css('color', 'red');
             console.log('Ошибка при пополнении баланса', error);
-            alert('Произошла ошибка при пополнении баланса.');
         }
     });
 }
@@ -111,6 +110,7 @@ const loadSecurities = () => {
                 $(`#securities-${uid}`).html(balance);
                 total += parseFloat(security.balance * security.price);
             })
+            refreshBalance();
             $(`#sec-balance`).html(total.toFixed(2));
             $(`#total-balance`).html((total + parseFloat($('#balance').text())).toFixed(2));
         },
@@ -135,6 +135,7 @@ const sendMarketData = (sl, tp) => {
             data: JSON.stringify(payload),
             contentType: 'application/json',
             success: function (response) {
+                console.log(response.forecast_results)
                 for (const [ticker, forecast] of Object.entries(response.forecast_results)) {
                     const row = $(`#stock-${ticker}`);
                     const forecastCell = row.find('td:eq(3)');
@@ -143,6 +144,13 @@ const sendMarketData = (sl, tp) => {
                     forecastCell.css('color', 'rgb(38, 51, 55)');
                 }
                 displayPredicate(response.predicate);
+                if (response.order) {
+                    $('#stock-widget tbody tr').each(function () {
+                        $(this).find('td:eq(2)').empty();
+                    });
+                    loadSecurities();
+                    loadOrders();
+                }
             },
             error: function (xhr, status, error) {
                 console.error("Ошибка при отправке данных на сервер: " + error);
@@ -153,7 +161,7 @@ const sendMarketData = (sl, tp) => {
     });
 }
 
-const startBot = () => {
+const startBot = (sendMarketDataWithInterval, stopSendingMarketData) => {
     $.ajax({
         url: '/start',
         type: 'GET',
