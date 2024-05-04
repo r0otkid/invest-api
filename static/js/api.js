@@ -225,7 +225,7 @@ const loadOrders = () => {
                     <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : color}">
                         <td>${order.instrument.figi}</td>
                         <td>${order.instrument.ticker}</td>
-                        <td>${order.price}</td>
+                        <td>${parseFloat(order.price).toFixed(2)}</td>
                         <td>${order.order_type}</td>
                         <td>${quantity}</td>
                         <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : `${parseFloat(order.price * quantity).toFixed(2)}`}</b> <code>RUB</code></td>

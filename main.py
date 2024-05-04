@@ -33,7 +33,7 @@ routes = web.RouteTableDef()
 
 INSTRUMENTS = [
     "BBG004730N88",  # SBER
-    "BBG00475K2X9",  # HYDR
+    # "BBG00475K2X9",  # HYDR
     "BBG004S68473",  # IRAO
     "BBG004730ZJ9",  # VTBR
     "BBG0100R9963",  # SGZH
@@ -273,7 +273,9 @@ async def get_securities_handler(request):
         if instrument and '_id' in instrument:
             del instrument['_id']
         security['instrument'] = instrument
-        security['price'] = data['marketData'][instrument['ticker']]['price'] if data else 0
+        ticker = instrument['ticker']
+        if ticker in data['marketData']:
+            security['price'] = data['marketData'][ticker]['price'] if data else 0
         if '_id' in security:
             del security['_id']
     return web.json_response({"securities": securities})

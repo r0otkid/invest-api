@@ -37,7 +37,10 @@ class TakeProfit:
         if average_price > price:
             current_profit = price * amount
             sell_profit = average_price * amount
-            profit_percent = ((current_profit - sell_profit) / sell_profit) * 100
+            if sell_profit != 0:
+                profit_percent = ((current_profit - sell_profit) / sell_profit) * 100
+            else:
+                profit_percent = 0
             if profit_percent > self.tp:
                 return amount
             return 0

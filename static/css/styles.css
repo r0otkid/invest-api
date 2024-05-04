@@ -338,11 +338,11 @@ label {
     font-size: 18px;
     font-weight: bold;
     text-align: center;
-    border-radius: 8px; /* Скругленные углы */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Небольшая тень для объема */
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     display: inline-block;
     width: auto;
-    transition: all 0.3s ease; /* Плавные изменения */
+    transition: all 0.3s ease;
 }
 
 #status {
@@ -362,15 +362,15 @@ label {
     font-family: 'Courier New', Courier, monospace;
     border: 1px solid #343030;
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    border-radius: 1px; /* Скругление углов */
-    text-shadow: 0 0 1px rgba(255, 255, 255, 0.7); /* Светящийся текст */
-    transition: all 0.3s ease; /* Плавный переход состояний */
+    border-radius: 1px;
+    text-shadow: 0 0 1px rgba(255, 255, 255, 0.7);
+    transition: all 0.3s ease;
     height: 155px;
 }
 
 #state-bar:hover {
-    box-shadow: 0 8px 16px rgba(0,0,0,0.2); /* Увеличенная тень при наведении */
-    transform: translateY(-1px); /* Подъем компонента при наведении */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+    transform: translateY(-1px);
     cursor: text;
 }
 
@@ -408,7 +408,6 @@ label {
     height: 300px;
 }
 
-/* Стилизация скроллбара */
 #orders::-webkit-scrollbar {
     width: 8px;
 }

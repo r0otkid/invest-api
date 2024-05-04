@@ -2,7 +2,6 @@ import logging
 import uuid
 from tinkoff.invest import AsyncClient, OrderDirection, OrderType, OrderExecutionReportStatus, GetOrdersResponse
 from settings import TOKEN, TARGET
-from utils import money_value_to_rub
 
 
 async def create_market_order(account_id: str, instrument_id: str, quantity: int, is_buy: bool) -> dict:
@@ -51,6 +50,6 @@ async def get_all_orders(account_id: str) -> dict:
         try:
             response: GetOrdersResponse = await client.orders.get_orders(account_id=account_id)
             orders = response.orders
-            return {"orders": [order.to_dict() for order in orders]}  # Конвертируем объекты Order в словари
+            return {"orders": [order.to_dict() for order in orders]}
         except Exception as e:
             return {"error": str(e)}

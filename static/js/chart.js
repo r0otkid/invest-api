@@ -67,7 +67,7 @@ function createTabs(dataByTicker) {
 function updateChart(ticker, price, timestamp) {
     const chartInstance = chartInstances[ticker];
     if (!chartInstance) {
-        console.error(`Chart instance not found for ticker: ${ticker}`);
+        // console.error(`Chart instance not found for ticker: ${ticker}`);
         return;
     }
 

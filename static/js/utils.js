@@ -48,32 +48,6 @@ function calculateAveragePrices(orders) {
 
 const updateExistingRow = (instrument, stockRow, closePrice) => {
     const { icon, color } = getIconAndColor(stockRow, closePrice);
-    selectBestTradingOptions().then(
-        best => {
-            const { bestToBuy, bestToSell } = best;
-
-            const tickerToBuy = bestToBuy.ticker;
-            const tickerToSell = bestToSell.ticker;
-
-            $('#stock-widget tbody tr').find('td:eq(1)').css('color', '#abb2bf');
-
-            $(`#stock-${tickerToBuy}`).find('td:eq(1)').css('color', 'darkseagreen');
-
-            $(`#stock-${tickerToSell}`).find('td:eq(1)').css('color', 'rgb(255, 107, 53)');
-
-            // analytics
-            // analyzeAllTickers().then(
-            //     analyze => {
-            //         stockRow.find('td:eq(3)').html(
-            //             `${analyze[instrument.ticker]} %`
-            //         );
-            //     }
-            // )
-        }
-    ).catch(error => {
-        console.error('Ошибка при выполнении selectBestTradingOptions:', error);
-    });
-
     const lastColumn = stockRow.find('td:eq(5)');
     color !== 'black' && lastColumn.css('color', 'rgb(38, 51, 55)');
     lastColumn.html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);

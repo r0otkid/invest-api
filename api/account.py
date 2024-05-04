@@ -14,7 +14,7 @@ async def get_accounts() -> dict:
 
 async def open_sandbox_account() -> str:
     with SandboxClient(TOKEN) as client:
-        return client.sandbox.open_sandbox_account().account_id
+        return client.sandbox.open_sandbox_account(name='contest2024:r0otkid/invest-api:1').account_id
 
 
 async def close_all_sanbox_accounts():
