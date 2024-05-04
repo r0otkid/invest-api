@@ -8,7 +8,7 @@
 
 0. Создать файл settings.py со следующим содержанием
 
-    ```bash
+    ```python
 import os
 from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
 
