@@ -6,9 +6,9 @@
 
 Для установки необходимо выполнить следующие шаги:
 
-0. Создать файл settings.py со следующим содержанием
+0. Создать файл settings.py со следующим содержанием:
 
-    ```python
+```python
 import os
 from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
 
@@ -17,7 +17,7 @@ TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН TINKOFF ХХХХ'
 BOT_TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН TELEGRAM ХХХХ'
 ROOT_ID = "ХХХХ ЗАМЕНИТЬ НА АЙДИ В TELEGRAM ХХХХ"
 TARGET = INVEST_GRPC_API if IS_PROD else INVEST_GRPC_API_SANDBOX
-    ```
+```
 
 1. Установить все необходимые зависимости с помощью pip:
 
