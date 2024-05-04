@@ -6,20 +6,22 @@
 
 Для установки необходимо выполнить следующие шаги:
 
-0. Создать файл settings.py со следующим содержанием:
+### 1. Создать базу mongodb с названием tin
+
+### 2. Создать файл settings.py со следующим содержанием:
 
 ```python
 import os
 from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
 
-IS_PROD = os.getenv("GRPC_PRODUCTION")
+IS_PROD = os.getenv("GRPC_PRODUCTION")  # установить для переключения на боевой контур
 TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН TINKOFF ХХХХ'
-BOT_TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН TELEGRAM ХХХХ'
-ROOT_ID = "ХХХХ ЗАМЕНИТЬ НА АЙДИ В TELEGRAM ХХХХ"
+BOT_TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН СВОЕГО БОТА В TELEGRAM ХХХХ'
+ROOT_ID = "ХХХХ ЗАМЕНИТЬ НА СВОЙ АЙДИ В TELEGRAM ХХХХ"
 TARGET = INVEST_GRPC_API if IS_PROD else INVEST_GRPC_API_SANDBOX
 ```
 
-1. Установить все необходимые зависимости с помощью pip:
+### 3. Установить все необходимые зависимости с помощью pip:
 
     ```bash
     pip install -r requirements.txt
