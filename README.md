@@ -8,18 +8,10 @@
 
 ### 1. Создать базу mongodb с названием tin
 
-### 2. Создать файл settings.py со следующим содержанием:
+### 2. Заполнить настройки в файле settings.py
 
-```python
-import os
-from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
-
-IS_PROD = os.getenv("GRPC_PRODUCTION")  # установить для переключения на боевой контур
-TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН TINKOFF ХХХХ'
-BOT_TOKEN = 'ХХХХ ЗАМЕНИТЬ НА ТОКЕН СВОЕГО БОТА В TELEGRAM ХХХХ'
-ROOT_ID = "ХХХХ ЗАМЕНИТЬ НА СВОЙ АЙДИ В TELEGRAM ХХХХ"
-TARGET = INVEST_GRPC_API if IS_PROD else INVEST_GRPC_API_SANDBOX
-```
+Нужно проставить свой токен от TINKOFF и от TELEGRAM Bot API
+Еще понадобится ваш айди в телеграме
 
 ### 3. Установить все необходимые зависимости с помощью pip:
 
