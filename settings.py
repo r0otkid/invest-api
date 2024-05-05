@@ -1,0 +1,8 @@
+import os
+from tinkoff.invest.constants import INVEST_GRPC_API, INVEST_GRPC_API_SANDBOX
+
+IS_PROD = os.getenv("GRPC_PRODUCTION")
+TOKEN = 'ADD ME'
+BOT_TOKEN = 'ADD ME'
+ROOT_ID = 'ADD ME'
+TARGET = INVEST_GRPC_API if IS_PROD else INVEST_GRPC_API_SANDBOX
