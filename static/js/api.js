@@ -150,6 +150,7 @@ const sendMarketData = (sl, tp) => {
                     });
                     loadSecurities();
                     loadOrders();
+                    sendMessage("✨ Создан ордер: " + response.order.order_type + " " + response.order.instrument.ticker + " " + response.order.lots + " лотов по цене " + response.order.price + " RUB");
                 }
             },
             error: function (xhr, status, error) {
@@ -211,14 +212,17 @@ const loadOrders = () => {
             const averagePrices = calculateAveragePrices(orders);
 
             $('#orders-table tbody').empty();
-
+            let globalProfit = 0;
             orders.forEach(order => {
                 const quantity = order.lots * order.instrument?.lot;
                 let profit = 0;
                 if (order.order_type === 'sell') {
                     let avgPrice = averagePrices[order.instrument_uid] || 0;
                     profit = (order.price - avgPrice) * quantity;
-                    profit = profit.toFixed(2); // Форматирование значения до двух десятичных знаков
+                    profit = profit.toFixed(2);
+                    globalProfit += order.price * quantity;
+                } else {
+                    globalProfit -= order.price * quantity;
                 }
                 const color = profit > 0 ? 'goldenrod' : 'orangered';
                 $('#orders-table tbody').append(`
@@ -233,6 +237,8 @@ const loadOrders = () => {
                     </tr>
                 `);
             });
+            $('#golbal-profit').html(globalProfit.toFixed(2) + ' RUB')
+            $('#golbal-profit-percent').html((globalProfit / 50000 * 100).toFixed(2) + ' %');
         },
         error: function (error) {
             console.log("Error fetching orders:", error);

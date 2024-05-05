@@ -11,14 +11,11 @@ function openDatabase() {
             const db = event.target.result;
             if (!db.objectStoreNames.contains("quotes")) {
                 const store = db.createObjectStore("quotes", { keyPath: "id", autoIncrement: true });
-                // Проверяем, существует ли уже индекс 'timestamp'
                 if (!store.indexNames.contains("timestamp")) {
-                    // Создаем новый индекс 'timestamp'
                     store.createIndex("timestamp", "timestamp", { unique: false });
                 }
-                store.createIndex("ticker", "ticker", { unique: false }); // Создание индекса 'ticker'
+                store.createIndex("ticker", "ticker", { unique: false });
             } else {
-                // Если хранилище уже существует, но нужно добавить новый индекс:
                 const store = transaction.objectStore("quotes");
                 if (!store.indexNames.contains("ticker")) {
                     store.createIndex("ticker", "ticker", { unique: false });
@@ -147,13 +144,11 @@ function fetchLatestTickerData() {
                 const cursor = event.target.result;
                 if (cursor) {
                     const record = cursor.value;
-                    // Добавляем запись только если для этого тикера еще не добавлена последняя запись
                     if (!latestDataByTicker[record.ticker]) {
                         latestDataByTicker[record.ticker] = { price: record.price, timestamp: record.timestamp };
                     }
                     cursor.continue();
                 } else {
-                    // Когда курсор прошел все записи, возвращаем результат
                     resolve(latestDataByTicker);
                 }
             };
@@ -237,7 +232,6 @@ async function generateData() {
             currentDate.setSeconds(Math.floor(Math.random() * 60)); // От 0 до 59 секунд
             currentDate.setMilliseconds(Math.floor(Math.random() * 1000)); // От 0 до 999 миллисекунд
 
-            // Получаем метку времени для новой случайной даты
             const randomTimestamp = currentDate.getTime();
 
             const quote = {

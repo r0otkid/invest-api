@@ -375,106 +375,6 @@ async function calculateProbabilityOfGrowth(ticker) {
 }
 
 
-
-// function calculateProbabilityOfGrowth(ticker) {
-//     return openDatabase().then(db => {
-//         return new Promise((resolve, reject) => {
-//             const transaction = db.transaction(['quotes'], 'readonly');
-//             const store = transaction.objectStore('quotes');
-//             const index = store.index('ticker');
-//             const range = IDBKeyRange.only(ticker);
-//             const request = index.getAll(range);
-
-//             request.onsuccess = (event) => {
-//                 const prices = event.target.result.map(item => item.price);
-//                 if (!prices.length) {
-//                     // console.log(`No prices available for the ticker ${ticker}`);
-//                     reject(new Error(`No prices available for the ticker ${ticker}.`));
-//                     return parseFloat(0).toFixed(2);
-//                 }
-//                 const meanPrice = prices.reduce((sum, price) => sum + price, 0) / prices.length;
-//                 const stdDev = Math.sqrt(prices.reduce((sum, price) => sum + Math.pow(price - meanPrice, 2), 0) / prices.length);
-//                 const threshold = 2 * stdDev;
-
-//                 const lag = 1; // Сдвиг на один день назад
-//                 const currentPrices = prices.slice(lag); // Цены начиная со второго дня
-//                 const laggedPrices = prices.slice(0, -lag); // Цены до последнего дня
-
-//                 const sma = calculateSMA(prices, smaWindowSize);
-//                 const ema = calculateEMA(prices, emaPeriod);
-//                 const wma = calculateWMA(prices, wmaWindowSize);
-
-//                 const rsi = calculateRSI(prices, rsiPeriod);
-//                 const macd = calculateMACD(prices);
-//                 const bollinger = calculateBollingerBands(prices);
-//                 const parabolicSAR = calculateParabolicSAR(prices);
-//                 const regression = calculateLinearRegression(prices);
-//                 const cusum = calculateCUSUM(prices);
-//                 const autocorrelation = calculateAutocorrelation(prices, 1);
-//                 const shapiroWilk = calculateShapiroWilkTest(prices);
-//                 const spearman = calculateSpearmanCorrelation(currentPrices, laggedPrices);
-//                 const dickeyFuller = calculateDickeyFullerTest(prices);
-
-//                 const smaLast = sma[sma.length - 1];
-//                 const emaLast = ema[ema.length - 1];
-//                 const wmaLast = wma[wma.length - 1];
-//                 const macdHistogramLast = macd.histogram[macd.histogram.length - 1];
-//                 const priceLast = prices[prices.length - 1];
-//                 const psarLast = parabolicSAR[parabolicSAR.length - 1];
-
-//                 // Веса для каждого индикатора
-//                 const volatility = calculateMarketVolatility(prices);
-//                 let weights = {
-//                     ema: 0.25,
-//                     macd: 0.20,
-//                     wma: 0.15,
-//                     sma: 0.10,
-//                     rsi: 0.15,
-//                     bollinger: 0.10,
-//                     stochastic: 0.10,
-//                     regression: 0.10,
-//                     cusum: 0.05,
-//                     autocorrelation: 0.15,
-//                     shapiroWilk: 0.05,
-//                     spearman: 0.05,
-//                     dickeyFuller: 0.05
-//                 };
-//                 weights = adjustWeights(weights, volatility);
-
-//                 // Расчет сигналов
-//                 let weightedSum = 0;
-//                 let weightTotal = 0;
-//                 weightedSum += (emaLast > smaLast) * weights.ema;
-//                 weightedSum += (emaLast > wmaLast) * weights.ema;
-//                 weightedSum += (wmaLast > smaLast) * weights.wma;
-//                 weightedSum += (macdHistogramLast > 0) * weights.macd;
-//                 weightedSum += (priceLast > bollinger.upper[bollinger.upper.length - 1]) * weights.bollinger;
-//                 weightedSum += (priceLast > psarLast) * weights.stochastic;
-//                 weightedSum += (regression.slope > 0) * weights.regression;
-//                 weightedSum += (Math.abs(cusum[cusum.length - 1]) > threshold) * (cusum[cusum.length - 1] > 0 ? weights.cusum : -weights.cusum);
-//                 weightedSum += (autocorrelation > 0.5) * weights.autocorrelation;
-//                 weightedSum += (shapiroWilk < 0.95) * weights.shapiroWilk;
-//                 weightedSum += (spearman > 0.5) * weights.spearman;
-//                 weightedSum += (dickeyFuller < -2.89) * weights.dickeyFuller;
-//                 weightedSum += (rsi > 70) * weights.rsi;
-//                 weightedSum += (rsi < 30) * -weights.rsi;
-
-//                 // Суммируем все веса
-//                 Object.values(weights).forEach(weight => weightTotal += weight);
-
-//                 // Итоговая вероятность
-//                 let probability = (weightedSum / weightTotal) * 100;
-//                 probability < 0 ? probability = 0 : probability > 100 ? probability = 100 : probability;
-//                 resolve(probability.toFixed(2));
-//             };
-
-//             request.onerror = (event) => {
-//                 reject(new Error(`Error fetching prices for ticker ${ticker}: ${event.target.errorCode}`));
-//             };
-//         });
-//     });
-// }
-
 function analyzeAllTickers() {
     return openDatabase().then(db => {
         return new Promise((resolve, reject) => {
@@ -513,7 +413,6 @@ function analyzeAllTickers() {
     });
 }
 
-// Функция для вызова calculateProbabilityOfGrowth из консоли:
 function analyzeTicker(ticker) {
     calculateProbabilityOfGrowth(ticker)
         .then(probability => {

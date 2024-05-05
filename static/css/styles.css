@@ -10,7 +10,7 @@ label {
     display: flex;
     justify-content: center;
     margin: 3px;
-    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a);
     color: #fff;
     padding: 5px;
     padding-left: 15px;
@@ -21,7 +21,7 @@ label {
     align-items: center;
     justify-content: space-between;
     margin: 3px;
-    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a);
     color: #fff;
     padding: 5px;
     padding-left: 15px;
@@ -76,8 +76,8 @@ label {
 }
 
 .btn:hover {
-    background-color: #45a049; /* Темно-зеленый фон при наведении */
-    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.3); /* Более заметная тень при наведении */
+    background-color: #45a049;
+    box-shadow: 0 8px 16px 0 rgba(0,0,0,0.3);
 }
 
 .balance {
@@ -107,7 +107,7 @@ label {
     font-family: 'Arial', sans-serif;
     font-size: 9pt;
     color: rgb(148, 157, 161);
-    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a);
     padding: 3px;
     margin: 3px;
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
@@ -174,12 +174,12 @@ label {
 }
 
 .stock-widget table td {
-    line-height: 1;  /* Меньше значение = меньше высота строки */
-    height: 5px;    /* Задаем фиксированную высоту для ячеек */
+    line-height: 1;
+    height: 5px;
 }
 
 .orders {
-    background: linear-gradient(to right, #2b2b2b, #1a1a1a); /* Тёмный градиент */
+    background: linear-gradient(to right, #2b2b2b, #1a1a1a);
     color: lightslategrey;
     padding: 20px;
     border-radius: 1px;
@@ -194,23 +194,23 @@ label {
 }
 
 .orders input[type="number"] {
-    background: linear-gradient(to right, #3a3f4b, #1a1a1a); /* Тёмный градиент */
+    background: linear-gradient(to right, #3a3f4b, #1a1a1a);
     color: lightslategrey;
     border: none;
     padding: 8px;
     border-radius: 4px;
-    width: 100%; /* Полная ширина относительно контейнера */
-    box-sizing: border-box; /* чтобы padding не изменял размеры */
-    margin-bottom: 15px; /* отступ снизу */
+    width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 15px;
 }
 
 .orders input[type="number"]::placeholder {
-    color: #636d83; /* цвет placeholder */
+    color: #636d83;
 }
 
 .orders input[type="number"]:focus {
     outline: none;
-    border: 2px solid #61afef; /* подсветка при фокусе */
+    border: 2px solid #61afef;
 }
 
 .stats {
@@ -260,13 +260,13 @@ label {
 }
 
 .parameter {
-    flex: 0 0 48%; /* Устанавливаем ширину колонок, чтобы они занимали примерно половину контейнера */
-    margin-bottom: 20px; /* Добавляем немного отступа снизу */
+    flex: 0 0 48%;
+    margin-bottom: 20px;
 }
 
 .slider {
-    width: 100%; /* Устанавливаем ширину ползунка равной ширине его контейнера */
-    margin-top: 5px; /* Небольшой отступ сверху для визуальной приятности */
+    width: 100%;
+    margin-top: 5px;
 }
 
 .left {
@@ -286,12 +286,12 @@ label {
 }
 
 .red, .stock-widget tr.red:hover {
-    background-color: rgb(255, 107, 53) !important; /* Насыщенный красный */
+    background-color: rgb(255, 107, 53) !important;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
 .green, .stock-widget tr.green:hover {
-    background-color: darkseagreen !important; /* Насыщенный зелёный */
+    background-color: darkseagreen !important;
     transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
@@ -333,7 +333,7 @@ label {
 
 #exchange-timer {
     padding: 5px 10px;
-    background: linear-gradient(to right, #240644, #09214a); /* Градиентный фон */
+    background: linear-gradient(to right, #240644, #09214a);
     color: #abb2bf;
     font-size: 18px;
     font-weight: bold;
@@ -482,4 +482,22 @@ label {
     font-size: 14pt;
     opacity: 0.8;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+#footer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 99.5%;
+    height: 2vh;
+    background-color: #1d0d2d;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    color: dodgerblue;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bolder;
+    font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    text-shadow: 0.5px 0.5px 1px #794aa8;
+    cursor: crosshair;
 }

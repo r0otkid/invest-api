@@ -54,9 +54,7 @@ const updateExistingRow = (instrument, stockRow, closePrice) => {
     setTimeout(() => {
         lastColumn.attr('class', 'stock');
         let currentHtml = stockRow.find('td:eq(5) b').html();
-        // Заменяем '+' и '-' на пустую строку, если они есть
         let updatedHtml = currentHtml.replace(/\+|\-/g, '');
-        // Обновляем содержимое элемента <b> в ячейке
         stockRow.find('td:eq(5) b').html(updatedHtml);
         lastColumn.css('color', '#abb2bf');
     }, 500);
@@ -65,10 +63,8 @@ const updateExistingRow = (instrument, stockRow, closePrice) => {
 const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
     let stockRow = $(`#stock-${instrument.ticker}`);
     if (stockRow.length === 0) {
-        // Добавляем новую строку в таблицу если ее нет
         createNewTableRow(instrument, closePrice, ticker);
     } else {
-        // Иначе обновляем существующую строку
         updateExistingRow(instrument, stockRow, closePrice);
     }
     addQuote(instrument.ticker, closePrice);
@@ -78,7 +74,7 @@ const collectAnalyticsData = () => {
     let analyticsData = {};
 
     $("tr.stock").each(function () {
-        const ticker = this.id.split('-')[1]; // ID имеет формат "stock-TICKER"
+        const ticker = this.id.split('-')[1];
         const percentageString = $(this).find("td:eq(3)").text().trim(); // из четвертой колонки
         const percentage = parseFloat(percentageString.replace('%', ''));
         analyticsData[ticker] = percentage || 50;  // 50% если данные не найдены
@@ -88,10 +84,9 @@ const collectAnalyticsData = () => {
 }
 
 const getForecastColor = (value) => {
-    // Плавный переход от мягкого красного к мягкому зелёному
     const hue = value * 120; // 0 (красный) - 120 (зелёный) в HSL
-    const saturation = 30; // Более низкая насыщенность для мягкости цвета
-    const lightness = 50 + (10 * value); // Плавно увеличиваем яркость для большей мягкости
+    const saturation = 30;
+    const lightness = 50 + (10 * value);
 
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
@@ -101,13 +96,11 @@ const displayPredicate = (predicates) => {
     $currentState.css('justify-content', 'center').css('align-items', 'center');
     const actionablePredicates = predicates.filter(p => !p.includes('No clear action'));
 
-    // Если нет действенных предложений, показываем одно сообщение "No clear action"
     if (actionablePredicates.length === 0 && predicates.length > 0) {
         $currentState.html('No clear action').delay(500).fadeOut(500, () => {
             $currentState.show().css('opacity', '');
         });
     } else if (actionablePredicates.length > 0) {
-        // Отображаем только те предложения, которые требуют действий
         const formattedPredicates = actionablePredicates.map(p => {
             const color = p.includes('📉') ? 'red-font' : 'green-font';
             return `<div class="${color}">${p}</div>`
@@ -116,7 +109,6 @@ const displayPredicate = (predicates) => {
             $currentState.show().css('opacity', '');
         });
     } else {
-        // Если предложений нет, показываем пустое состояние или сообщение по умолчанию
         $currentState.html('No data available').delay(500).fadeOut(500, () => {
             $currentState.show().css('opacity', '');
         });

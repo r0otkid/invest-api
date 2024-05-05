@@ -3,10 +3,9 @@ function filterDataByInterval(tickerData, intervalMinutes = 5) {
         console.error('Data for filtering is not an array:', tickerData);
         return [];
     }
-    const intervalMilliseconds = intervalMinutes * 60 * 1000; // Конвертируем минуты в миллисекунды
-    // Убедимся, что данные отсортированы
+    const intervalMilliseconds = intervalMinutes * 60 * 1000;
     const sortedData = tickerData.sort((a, b) => a.timestamp - b.timestamp);
-    let lastTimestamp = sortedData[0]?.timestamp || 0; // Начальная метка времени или 0
+    let lastTimestamp = sortedData[0]?.timestamp || 0;
     let filteredData = [];
 
     for (let i = 0; i < sortedData.length; i++) {
@@ -43,7 +42,6 @@ function createTabs(dataByTicker) {
     });
 
     function setActiveTab(activeIndex) {
-        // Снимаем выделение со всех кнопок и скрываем все панели
         document.querySelectorAll('.tab-buttons button').forEach((button, index) => {
             if (index === activeIndex) {
                 button.classList.add('active');
@@ -52,7 +50,6 @@ function createTabs(dataByTicker) {
             }
         });
 
-        // Показываем активную панель
         document.querySelectorAll('.tab-content .content-panel').forEach((panel, index) => {
             if (index === activeIndex) {
                 panel.classList.add('active');
@@ -67,7 +64,6 @@ function createTabs(dataByTicker) {
 function updateChart(ticker, price, timestamp) {
     const chartInstance = chartInstances[ticker];
     if (!chartInstance) {
-        // console.error(`Chart instance not found for ticker: ${ticker}`);
         return;
     }
 
@@ -87,7 +83,6 @@ function updateChart(ticker, price, timestamp) {
         });
     }
 
-    // Обновление графика
     chartInstance.update({
         preservation: true
     });
@@ -122,32 +117,27 @@ const plugin = {
 };
 
 function createCharts(dataByTicker) {
-    // Получение элементов для вкладок и содержимого
     const tabLinks = document.querySelector('.tab-links');
     const tabContent = document.querySelector('.tab-content');
 
     Object.keys(dataByTicker).forEach((ticker, index) => {
-        // Важно: Убедимся, что мы передаем массив для конкретного тикера
         const tickerData = dataByTicker[ticker];
         const filteredData = filterDataByInterval(tickerData);
         const prices = filteredData.map(entry => entry.price);
         const timestamps = filteredData.map(entry => new Date(entry.timestamp).toLocaleTimeString());
 
-        // Создание новой вкладки
         const tabButton = document.createElement('li');
         tabButton.textContent = ticker;
         tabButton.dataset.target = `chart-${ticker}`;
         tabButton.className = 'tab-link';
-        tabButton.onclick = changeTab; // Функция смены вкладок
+        tabButton.onclick = changeTab;
         tabLinks.appendChild(tabButton);
 
-        // Создание контейнера для графика
         const chartContainer = document.createElement('div');
         chartContainer.id = `chart-${ticker}`;
         chartContainer.className = 'tab-pane';
         tabContent.appendChild(chartContainer);
 
-        // Настройка контейнера canvas для Chart.js
         const canvas = document.createElement('canvas');
         chartContainer.appendChild(canvas);
 
@@ -185,7 +175,6 @@ function createCharts(dataByTicker) {
         });
         chartInstances[ticker] = chartInstance;
 
-        // Делаем первую вкладку активной
         if (index === 0) {
             tabButton.classList.add('active');
             chartContainer.classList.add('active');
@@ -196,11 +185,9 @@ function createCharts(dataByTicker) {
 function changeTab(event) {
     const targetId = event.target.dataset.target;
 
-    // Удаляем активное состояние со всех вкладок и панелей
     document.querySelectorAll('.tab-link').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
 
-    // Добавляем активное состояние на выбранную вкладку и панель
     event.target.classList.add('active');
     document.getElementById(targetId).classList.add('active');
 }

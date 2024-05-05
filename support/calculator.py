@@ -1,4 +1,3 @@
-import logging
 from motor.motor_asyncio import AsyncIOMotorClient
 
 from api.instrument import get_instrument_by_id
