@@ -15,9 +15,9 @@
 
 ### 3. Установить все необходимые зависимости с помощью pip:
 
-    ```bash
-    pip install -r requirements.txt
-    ```
+```bash
+pip install -r requirements.txt
+```
 
 ## Запуск
 
