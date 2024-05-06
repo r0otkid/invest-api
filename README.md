@@ -1,4 +1,4 @@
-# Trade Executor
+# Stock Miner
 
 ![Trade Executor](https://i.ibb.co/mDpFwsy/image.png)
 

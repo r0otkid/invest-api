@@ -269,6 +269,11 @@ label {
     margin-top: 5px;
 }
 
+.form-select {
+    background-color: #333333 !important;
+    color: #ffffff !important;
+}
+
 .left {
     display: flex;
     flex-direction: column;
@@ -308,6 +313,10 @@ label {
     background-color: darkgoldenrod;
 }
 
+.highlighted {
+    background-color: azure;
+    opacity: 0.6;
+}
 
 #balance {
     font-weight: bold;
@@ -366,6 +375,7 @@ label {
     text-shadow: 0 0 1px rgba(255, 255, 255, 0.7);
     transition: all 0.3s ease;
     height: 155px;
+    font-size: 11pt;
 }
 
 #state-bar:hover {
@@ -381,6 +391,7 @@ label {
     padding: 3px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     color: dodgerblue !important;
+    column-count: 2;
 }
 
 #order {
@@ -406,6 +417,7 @@ label {
     border-radius: 1px;
     color: seagreen;
     height: 300px;
+    margin-bottom: 50px;
 }
 
 #orders::-webkit-scrollbar {
@@ -429,6 +441,11 @@ label {
     color: silver;
     border: 1px solid #35413a;
     text-align: center;
+    cursor: pointer;
+}
+
+#orders-table, tr:hover {
+    border: 1px solid #35413a;
 }
 
 #intervalDisplay {
@@ -485,7 +502,7 @@ label {
 }
 
 #footer {
-    position: absolute;
+    position: fixed;
     left: 0;
     bottom: 0;
     width: 99.5%;

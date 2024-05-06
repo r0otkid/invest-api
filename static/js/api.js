@@ -144,13 +144,13 @@ const sendMarketData = (sl, tp) => {
                     forecastCell.css('color', 'rgb(38, 51, 55)');
                 }
                 displayPredicate(response.predicate);
+                displayGlobalProfit();
                 if (response.order) {
                     $('#stock-widget tbody tr').each(function () {
                         $(this).find('td:eq(2)').empty();
                     });
                     loadSecurities();
                     loadOrders();
-                    sendMessage("✨ Создан ордер: " + response.order.order_type + " " + response.order.instrument.ticker + " " + response.order.lots + " лотов по цене " + response.order.price + " RUB");
                 }
             },
             error: function (xhr, status, error) {
@@ -229,7 +229,7 @@ const loadOrders = () => {
                     <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : color}">
                         <td>${order.instrument.figi}</td>
                         <td>${order.instrument.ticker}</td>
-                        <td>${parseFloat(order.price).toFixed(2)}</td>
+                        <td>${parseFloat(order.price).toFixed(3)}</td>
                         <td>${order.order_type}</td>
                         <td>${quantity}</td>
                         <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : `${parseFloat(order.price * quantity).toFixed(2)}`}</b> <code>RUB</code></td>

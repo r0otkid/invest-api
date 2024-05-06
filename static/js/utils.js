@@ -114,3 +114,26 @@ const displayPredicate = (predicates) => {
         });
     }
 }
+
+const displayGlobalProfit = () => {
+    let totalBuyAmount = 0;
+    let totalSellAmount = 0;
+    const initialAmount = 50000;
+
+    $('#orders-table tbody tr').each(function () {
+        const operation = $(this).find('td:nth-child(4)').text().trim();
+        const amount = parseFloat($(this).find('td:nth-child(6)').text().trim().replace(/[^0-9.-]+/g, ""));
+        if (operation === 'buy') {
+            totalBuyAmount += amount;
+        } else if (operation === 'sell') {
+            totalSellAmount += amount;
+        }
+    });
+
+    const profitValue = parseFloat(parseFloat($('#total-balance').text()) - initialAmount);
+    const profit = profitValue.toFixed(2);
+    const profitPercent = parseFloat(profitValue * 100 / initialAmount).toFixed(3);
+
+    $('#global-profit').html(profit + " RUB");
+    $('#global-profit-percent').html(profitPercent + ' %');
+}

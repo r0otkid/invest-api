@@ -13,15 +13,20 @@ class StopLoss:
 
     async def check_loss(self, price: float, amount: int, instrument_uid: str) -> int:
         cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
-        last_five_buy_orders = await cursor.to_list(length=None)
-        average_price = sum([order['price'] for order in last_five_buy_orders]) / 5
-        if average_price > price:
-            current_cost = price * amount
-            buy_cost = average_price * amount
-            loss_percent = ((buy_cost - current_cost) / buy_cost) * 100
-            if loss_percent > self.sl:
-                return amount
-            return 0
+        last_buy_orders = await cursor.to_list(length=None)
+        orders_count = len(last_buy_orders)
+        if orders_count:
+            average_price = sum([order['price'] for order in last_buy_orders]) / orders_count
+            if average_price >= price:
+                current_cost = price * amount
+                buy_cost = average_price * amount
+                if buy_cost:
+                    loss_percent = ((buy_cost - current_cost) / buy_cost) * 100
+                else:
+                    loss_percent = 0
+                if loss_percent > self.sl:
+                    return amount
+                return 0
         return amount
 
 
@@ -32,18 +37,20 @@ class TakeProfit:
 
     async def check_profit(self, price: float, amount: int, instrument_uid: str) -> int:
         cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
-        last_five_buy_orders = await cursor.to_list(length=None)
-        average_price = sum([order['price'] for order in last_five_buy_orders]) / 5
-        if average_price > price:
-            current_profit = price * amount
-            sell_profit = average_price * amount
-            if sell_profit != 0:
-                profit_percent = ((current_profit - sell_profit) / sell_profit) * 100
-            else:
-                profit_percent = 0
-            if profit_percent > self.tp:
-                return amount
-            return 0
+        last_buy_orders = await cursor.to_list(length=None)
+        orders_count = len(last_buy_orders)
+        if orders_count:
+            average_price = sum([order['price'] for order in last_buy_orders]) / orders_count
+            if average_price <= price:
+                current_profit = price * amount
+                sell_profit = average_price * amount
+                if sell_profit != 0:
+                    profit_percent = ((current_profit - sell_profit) / sell_profit) * 100
+                else:
+                    profit_percent = 0
+                if profit_percent > self.tp:
+                    return amount
+                return 0
         return amount
 
 
@@ -64,6 +71,14 @@ class TradeExecutor:
         else:
             return None
 
+    async def get_any_last_order(self, instrument_uid):
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid}).sort('_id', -1).limit(1)
+        last_order = await cursor.to_list(length=1)
+        if last_order:
+            return last_order[0]
+        else:
+            return None
+
     async def execute_trades(
         self,
         predicates,
@@ -73,7 +88,7 @@ class TradeExecutor:
         order_was_created = False
         for predicate in predicates:
             parts = predicate.split()
-            action = parts[0]  # Должно быть 📈 BUY или 📉 SELL
+            action = parts[0]  # Должно быть 📈 или 📉
             ticker = parts[2]  # Символьный код акции
             instrument = await self.db.instruments.find_one({'ticker': ticker})
             account = await self.db.account.find_one()
@@ -81,12 +96,14 @@ class TradeExecutor:
             if instrument and action in ['📈', '📉']:
                 logging.warning(f'Get recommendation: {action} {ticker}')
                 last_order = await self.get_last_order(instrument['uid'])
+                real_last_order = await self.get_any_last_order(instrument_uid=instrument['uid'])
                 # Проверяем, когда в последний раз выполнялась операция по этому тикеру
-                if not last_order or self._can_trade_again(last_order['timestamp']):
+                if not last_order or self._can_trade_again(real_last_order['timestamp']):
                     price = market_data.get(ticker, {}).get('price', 0)
                     amount = await self._calculate_amount(action, instrument['uid'], price)
                     is_sell = action == '📉'
                     is_buy = action == '📈'
+
                     if is_sell:
                         amount = await self.stop_loss.check_loss(price, amount, instrument['uid'])
                         amount = await self.take_profit.check_profit(price, amount, instrument['uid'])
@@ -143,7 +160,7 @@ class TradeExecutor:
         # Проверяем, прошло ли достаточно времени с последней торговой операции
         current_time = self.get_current_time()
         time_elapsed = current_time - last_trade_timestamp
-        return time_elapsed > 60  # секунд
+        return time_elapsed > 120  # секунд
 
     @staticmethod
     def _calculate_profit_percentage(buy_price, price):

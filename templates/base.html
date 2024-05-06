@@ -3,10 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Stock Widget</title>
+    <title>Stock Miner</title>
     <link rel="stylesheet" href="static/css/styles.css" />
     <link rel="stylesheet" href="static/css/data-tables.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
   </head>
 
   <body>
@@ -49,20 +50,20 @@
       </div>
       <div class="orders">
         <label for="sl">Stop Loss</label>
-        <input type="number" id="sl" value="0.35" placeholder="%" />
+        <input type="number" id="sl" value="0.70" placeholder="%" />
         <label for="tp">Take Profit</label>
-        <input type="number" id="tp" value="0.25" placeholder="%" />
+        <input type="number" id="tp" value="0.30" placeholder="%" />
         <div id="accordion">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div id="analytics-settings">
           <label for="intervalSlider">Market data interval:</label>
-          <input type="range" id="intervalSlider" min="1" max="60" value="2" class="slider" />
-          <div id="intervalDisplay">2 sec</div>
+          <input type="range" id="intervalSlider" min="1" max="60" value="5" class="slider" />
+          <div id="intervalDisplay">5 sec</div>
 
           <label for="hoursToStore">Minutes to store:</label>
-          <input type="range" id="hoursToStore" min="1" max="10" value="5" class="slider" />
-          <div id="intervalStoring">5 min</div>
+          <input type="range" id="hoursToStore" min="1" max="10" value="7" class="slider" />
+          <div id="intervalStoring">7 min</div>
           <div class="parameters">
             <!-- SMA -->
             <div class="parameter">
@@ -135,7 +136,6 @@
       <div id="global-profit-percent">0 %</div>
     </div>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css" />
     <script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
     <script src="/static/js/libraries/chart.js"></script>
 
@@ -174,7 +174,7 @@
           $('#current-state').html('Ready to start').css('color', 'green')
           clearInterval(intervalId)
         } else {
-          $('#start').css('display', 'none')  // todo: display -> none
+          $('#start').css('display', 'none')
           $('#current-state').html('Loading...').css('color', 'dodgerblue')
         }
       }
@@ -312,13 +312,23 @@
 
           $('#accordion').click(function() {
             $('#analytics-settings').toggle();
-            var icon = $(this).find('i');
+            let icon = $(this).find('i');
             if (icon.hasClass('fa-chevron-down')) {
                 icon.removeClass('fa-chevron-down').addClass('fa-chevron-up');
             } else {
                 icon.removeClass('fa-chevron-up').addClass('fa-chevron-down');
             }
-        });
+          });
+          $('#orders-table tbody').on('click', 'tr', function() {
+            let ticker = $(this).find('td:nth-child(2)').text();
+            $('#orders-table tbody tr').removeClass('highlighted');
+            $('#orders-table tbody tr').each(function() {
+                const currentTicker = $(this).find('td:nth-child(2)').text();
+                if (currentTicker === ticker) {
+                    $(this).toggleClass('highlighted');
+                }
+            });
+          });
           setupAutomaticUpdates();
         })
     </script>
