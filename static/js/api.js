@@ -3,7 +3,7 @@ const openAccount = () => {
         url: '/open-sandbox-account',
         type: 'GET',
         success: (response) => {
-            addMoney(response.account_id, 50000);
+            addMoney(response.account_id, 5000);
         },
         error: (error) => {
             console.log('Ошибка при открытии аккаунта', error);
@@ -120,7 +120,7 @@ const loadSecurities = () => {
     });
 }
 
-const sendMarketData = (sl, tp) => {
+const sendMarketData = (sl, tp, isReverse) => {
     fetchLatestTickerData().then(data => {
         const analyticsData = collectAnalyticsData();
 
@@ -130,7 +130,7 @@ const sendMarketData = (sl, tp) => {
         };
 
         $.ajax({
-            url: `/market-data?sl=${sl}&tp=${tp}`,
+            url: `/market-data?sl=${sl}&tp=${tp}&is_reverse=${isReverse}`,
             type: 'POST',
             data: JSON.stringify(payload),
             contentType: 'application/json',
@@ -229,7 +229,7 @@ const loadOrders = () => {
                     <tr style="color: ${order.order_type === 'buy' ? 'seagreen' : color}">
                         <td>${order.instrument.figi}</td>
                         <td>${order.instrument.ticker}</td>
-                        <td>${parseFloat(order.price).toFixed(3)}</td>
+                        <td>${parseFloat(order.price).toFixed(5).toString()}</td>
                         <td>${order.order_type}</td>
                         <td>${quantity}</td>
                         <td><b>${order.order_type === 'buy' ? `-${parseFloat(order.price * quantity).toFixed(2)}` : `${parseFloat(order.price * quantity).toFixed(2)}`}</b> <code>RUB</code></td>
@@ -238,7 +238,7 @@ const loadOrders = () => {
                 `);
             });
             $('#golbal-profit').html(globalProfit.toFixed(2) + ' RUB')
-            $('#golbal-profit-percent').html((globalProfit / 50000 * 100).toFixed(2) + ' %');
+            $('#golbal-profit-percent').html((globalProfit / 10000 * 100).toFixed(2) + ' %');
         },
         error: function (error) {
             console.log("Error fetching orders:", error);

@@ -1,4 +1,5 @@
 from decimal import Decimal
+import logging
 from tinkoff.invest import AsyncClient, MoneyValue
 from tinkoff.invest.sandbox.client import SandboxClient
 from tinkoff.invest.utils import decimal_to_quotation, quotation_to_decimal
@@ -34,14 +35,18 @@ async def add_money_sandbox(account_id: str, money: int, currency="rub"):
 
 
 async def get_account_positions(account_id: str, money_only=True) -> list:
-    if IS_PROD:
-        async with AsyncClient(TOKEN, target=TARGET) as cli:
-            result = await cli.operations.get_positions(account_id=account_id)
-            return result.money if money_only else result
-    else:
-        async with AsyncClient(TOKEN, target=TARGET, sandbox_token=TOKEN) as cli:
-            result = await cli.operations.get_positions(account_id=account_id)
-            return result.money if money_only else result
+    try:
+        if IS_PROD:
+            async with AsyncClient(TOKEN, target=TARGET) as cli:
+                result = await cli.operations.get_positions(account_id=account_id)
+                return result.money if money_only else result
+        else:
+            async with AsyncClient(TOKEN, target=TARGET, sandbox_token=TOKEN) as cli:
+                result = await cli.operations.get_positions(account_id=account_id)
+                return result.money if money_only else result
+    except Exception as e:
+        logging.error(e)
+        return []
 
 
 async def get_info() -> dict:

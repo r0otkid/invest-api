@@ -14,7 +14,7 @@ const updateExchangeTimer = () => {
         targetTime = closingTime;
         messagePrefix = "To close: ";
     } else {
-        $('#exchange-timer').text("Stock closed.");
+        $('#exchange-timer').text("Evening trading");
         return;
     }
 

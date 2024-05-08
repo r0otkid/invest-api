@@ -2,12 +2,9 @@ $(document).ready(() => {
 
     $(document).on('click', `[id^='stock-']`, function () {
         const ticker = this.id.replace('stock-', '');
-        const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
-        tabButton.click();
-    });
+        $('#orders-table tbody tr').removeClass('highlighted');
+        $(`#orders-table tbody tr td:contains(${ticker})`).parent().addClass('highlighted');
 
-    $(document).on('click', `[id^='stock-']`, function () {
-        const ticker = this.id.replace('stock-', '');
         const tabButton = $(`.tab-link[data-target='chart-${ticker}']`);
         tabButton.click();
     });

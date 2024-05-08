@@ -1,15 +1,3 @@
-const createNewTableRow = (instrument, closePrice, ticker) => {
-    $('#stock-widget tbody').append(
-        `<tr id="stock-${instrument.ticker}" class="stock" data-price="${closePrice}">
-            <td><img width='15px' height='15px' style='border-radius: 50%; margin-right: 5px;' src="/static/img/${instrument.ticker}.png" alt="${instrument.name}" title="${instrument.name}" /></td>
-            <td>${instrument.name}</td>
-            <td id="securities-${instrument.uid}"></td>
-            <td></td>
-            <td>${ticker}</td>
-            <td style="text-align: center;"><b>&nbsp;&nbsp;${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
-        </tr>`
-    );
-}
 
 const getIconAndColor = (stockRow, closePrice) => {
     let icon = '&nbsp;&nbsp;';
@@ -45,18 +33,56 @@ function calculateAveragePrices(orders) {
 
     return averagePrices;
 }
+const calculateDeviation = (ticker) => {
+    const orders = $(`#orders-table tbody tr`).filter(
+        (index, row) => $(row).find('td:eq(1)').text().trim() === ticker.trim() && $(row).find('td:eq(3)').text() === 'buy'
+    );
+    if (orders.length === 0) {
+        return;
+    }
+    let totalQuantity = 0;
+    let totalAmount = 0;
+    orders.each((index, row) => {
+        totalQuantity += parseFloat($(row).find('td:eq(4)').text());
+        totalAmount += parseFloat($(row).find('td:eq(5)').text().replace(/[^\d.]/g, ''));
+    });
+    if (totalQuantity === 0) {
+        return;
+    }
+    const averagePrice = totalAmount / totalQuantity;
+    const currentPrice = parseFloat($(`#stock-${ticker} td:eq(5)`).text().replace(/[^\d.]/g, '').trim());
+    if (isNaN(currentPrice)) {
+        return;
+    }
+    const deviation = Math.abs(currentPrice) - Math.abs(averagePrice);
+    return deviation.toFixed(1)
+};
 
-const updateExistingRow = (instrument, stockRow, closePrice) => {
+const createNewTableRow = (instrument, closePrice, ticker) => {
+    $('#stock-widget tbody').append(
+        `<tr id="stock-${instrument.ticker}" class="stock" data-price="${closePrice}">
+            <td><img width='15px' height='15px' style='border-radius: 50%; margin-right: 5px;' src="/static/img/${instrument.ticker}.png" alt="${instrument.name}" title="${instrument.name}" /></td>
+            <td>${instrument.name}</td>
+            <td id="securities-${instrument.uid}"></td>
+            <td></td>
+            <td>${ticker}</td>
+            <td style="text-align: center;"><b>&nbsp;&nbsp;${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
+            <td>0</td>
+        </tr>`
+    );
+}
+
+const updateExistingRow = (stockRow, closePrice) => {
     const { icon, color } = getIconAndColor(stockRow, closePrice);
-    const lastColumn = stockRow.find('td:eq(5)');
-    color !== 'black' && lastColumn.css('color', 'rgb(38, 51, 55)');
-    lastColumn.html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
+    const preLastColumn = stockRow.find('td:eq(5)');
+    color !== 'black' && preLastColumn.css('color', 'rgb(38, 51, 55)');
+    preLastColumn.html(`<b>${icon} ${parseFloat(closePrice.toFixed(8)).toString()}</b>`).attr('class', `stock ${color}`).data('price', closePrice);
     setTimeout(() => {
-        lastColumn.attr('class', 'stock');
+        preLastColumn.attr('class', 'stock');
         let currentHtml = stockRow.find('td:eq(5) b').html();
         let updatedHtml = currentHtml.replace(/\+|\-/g, '');
         stockRow.find('td:eq(5) b').html(updatedHtml);
-        lastColumn.css('color', '#abb2bf');
+        preLastColumn.css('color', '#abb2bf');
     }, 500);
 }
 
@@ -65,9 +91,16 @@ const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
     if (stockRow.length === 0) {
         createNewTableRow(instrument, closePrice, ticker);
     } else {
-        updateExistingRow(instrument, stockRow, closePrice);
+        updateExistingRow(stockRow, closePrice);
     }
     addQuote(instrument.ticker, closePrice);
+    const lastColumn = stockRow.find('td:eq(6)');
+    if (stockRow.find('td:eq(2)').text().trim()) {
+        const dev = calculateDeviation(instrument.ticker);
+        lastColumn.html(dev);
+    } else {
+        lastColumn.html(0);
+    }
 };
 
 const collectAnalyticsData = () => {
@@ -93,7 +126,6 @@ const getForecastColor = (value) => {
 
 const displayPredicate = (predicates) => {
     const $currentState = $('#current-state');
-    $currentState.css('justify-content', 'center').css('align-items', 'center');
     const actionablePredicates = predicates.filter(p => !p.includes('No clear action'));
 
     if (actionablePredicates.length === 0 && predicates.length > 0) {
@@ -118,7 +150,7 @@ const displayPredicate = (predicates) => {
 const displayGlobalProfit = () => {
     let totalBuyAmount = 0;
     let totalSellAmount = 0;
-    const initialAmount = 50000;
+    const initialAmount = 10000;
 
     $('#orders-table tbody tr').each(function () {
         const operation = $(this).find('td:nth-child(4)').text().trim();

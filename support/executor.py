@@ -1,3 +1,4 @@
+import asyncio
 import time
 import logging
 from typing import Callable
@@ -12,7 +13,7 @@ class StopLoss:
         self.sl = sl
 
     async def check_loss(self, price: float, amount: int, instrument_uid: str) -> int:
-        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(1)
         last_buy_orders = await cursor.to_list(length=None)
         orders_count = len(last_buy_orders)
         if orders_count:
@@ -36,7 +37,7 @@ class TakeProfit:
         self.tp = tp
 
     async def check_profit(self, price: float, amount: int, instrument_uid: str) -> int:
-        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(5)
+        cursor = self.db.orders.find({'instrument_uid': instrument_uid, 'order_type': 'buy'}).sort('_id', -1).limit(1)
         last_buy_orders = await cursor.to_list(length=None)
         orders_count = len(last_buy_orders)
         if orders_count:
@@ -92,8 +93,8 @@ class TradeExecutor:
             ticker = parts[2]  # Символьный код акции
             instrument = await self.db.instruments.find_one({'ticker': ticker})
             account = await self.db.account.find_one()
-            account_id = account['account_id']
-            if instrument and action in ['📈', '📉']:
+            account_id = account.get('account_id')
+            if account_id and instrument and action in ['📈', '📉']:
                 logging.warning(f'Get recommendation: {action} {ticker}')
                 last_order = await self.get_last_order(instrument['uid'])
                 real_last_order = await self.get_any_last_order(instrument_uid=instrument['uid'])
@@ -111,7 +112,7 @@ class TradeExecutor:
                     if amount > 0:
                         # ПОКУПКА
                         if is_buy:
-                            resp = await create_order(account_id, amount, instrument['uid'], 'buy')
+                            resp = await create_order(account_id, amount, instrument['uid'], 'buy', price)
                             order = {
                                 'account_id': account_id,
                                 'lots': amount,
@@ -121,7 +122,7 @@ class TradeExecutor:
                             }
                         # ПРОДАЖА
                         elif is_sell:
-                            resp = await create_order(account_id, amount, instrument['uid'], 'sell')
+                            resp = await create_order(account_id, amount, instrument['uid'], 'sell', price)
                             order = {
                                 'account_id': account_id,
                                 'lots': amount,
@@ -133,7 +134,6 @@ class TradeExecutor:
                         await self.db.orders.insert_one(order)
                         order_was_created = True
                         logging.warning(f"Order for {action} {ticker} was created.")
-
                         # обновляем баланс и securities
                         await self.db.securities.delete_many({})
                         await self.db.securities.insert_one({'money': await get_balance(account_id=account_id)})
@@ -150,8 +150,7 @@ class TradeExecutor:
                             for pos in positions.securities
                         ]
                         await self.db.securities.update_one({}, {"$set": {"securities": securities}})
-                    else:
-                        logging.warning(f"Amount for {action} {ticker} is zero.")
+                        break
                 else:
                     logging.warning(f"Cannot trade {ticker} again so soon.")
         return order_was_created
@@ -160,7 +159,7 @@ class TradeExecutor:
         # Проверяем, прошло ли достаточно времени с последней торговой операции
         current_time = self.get_current_time()
         time_elapsed = current_time - last_trade_timestamp
-        return time_elapsed > 120  # секунд
+        return time_elapsed > 60  # секунд
 
     @staticmethod
     def _calculate_profit_percentage(buy_price, price):

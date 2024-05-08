@@ -37,6 +37,7 @@
               <th>Analytics</th>
               <th>Ticker</th>
               <th style="text-align: center;">Price (RUB)</th>
+              <th style="text-align: right;">Change (RUB)</th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -50,51 +51,57 @@
       </div>
       <div class="orders">
         <label for="sl">Stop Loss</label>
-        <input type="number" id="sl" value="0.70" placeholder="%" />
+        <input type="number" id="sl" value="0.23" placeholder="%" />
         <label for="tp">Take Profit</label>
-        <input type="number" id="tp" value="0.30" placeholder="%" />
+        <input type="number" id="tp" value="0.17" placeholder="%" />
         <div id="accordion">
           <i class="fas fa-chevron-down"></i>
         </div>
         <div id="analytics-settings">
           <label for="intervalSlider">Market data interval:</label>
-          <input type="range" id="intervalSlider" min="1" max="60" value="5" class="slider" />
-          <div id="intervalDisplay">5 sec</div>
+          <input type="range" id="intervalSlider" min="5" max="60" value="7" class="slider" />
+          <div id="intervalDisplay">7 sec</div>
 
           <label for="hoursToStore">Minutes to store:</label>
-          <input type="range" id="hoursToStore" min="1" max="10" value="7" class="slider" />
-          <div id="intervalStoring">7 min</div>
+          <input type="range" id="hoursToStore" min="3" max="10" value="10" class="slider" />
+          <div id="intervalStoring">10 min</div>
           <div class="parameters">
             <!-- SMA -->
             <div class="parameter">
               <label for="smaSlider">SMA Window Size:</label>
-              <input type="range" id="smaSlider" min="1" max="24" value="6" class="slider" />
-              <span id="smaValue">6 items</span>
+              <input type="range" id="smaSlider" min="8" max="100" value="60" class="slider" />
+              <span id="smaValue">60 items</span>
             </div>
 
             <!-- EMA -->
             <div class="parameter">
               <label for="emaSlider">EMA Period:</label>
-              <input type="range" id="emaSlider" min="1" max="24" value="6" class="slider" />
-              <span id="emaValue">6 items</span>
+              <input type="range" id="emaSlider" min="8" max="100" value="60" class="slider" />
+              <span id="emaValue">60 items</span>
             </div>
 
             <!-- WMA -->
             <div class="parameter">
               <label for="wmaSlider">WMA Window Size:</label>
-              <input type="range" id="wmaSlider" min="1" max="10" value="6" class="slider" />
-              <span id="wmaValue">6 items</span>
+              <input type="range" id="wmaSlider" min="8" max="100" value="60" class="slider" />
+              <span id="wmaValue">60 items</span>
             </div>
 
             <!-- RSI -->
             <div class="parameter">
               <label for="rsiSlider">RSI Period:</label>
-              <input type="range" id="rsiSlider" min="1" max="48" value="12" class="slider" />
-              <span id="rsiValue">12 items</span>
+              <input type="range" id="rsiSlider" min="14" max="200" value="48" class="slider" />
+              <span id="rsiValue">48 items</span>
             </div>
           </div>
         </div>
-        <button style="float: right; margin-top: 5px;" class="btn blue" id="start">Start Bot</button>
+        <div class="flex-center">
+          <div class="toggle-container">
+            <input type="checkbox" id="toggle" class="toggle-input" />
+            <label for="toggle" class="toggle-label">Reverse mode</label>
+          </div>
+          <button style="float: right; margin-top: 5px;" class="btn blue" id="start">Start Bot</button>
+        </div>
       </div>
     </div>
     <div class="stats">
@@ -156,6 +163,7 @@
       let emaPeriod = 10;
       let wmaWindowSize = 10;
       let rsiPeriod = 14;
+      let isReverse = false;
 
       const balance = $("#balance");
       const currentState =  $('current-state');
@@ -182,7 +190,7 @@
 
       
       $('#intervalSlider').on('input', function() {
-        marketDataInterval = $(this).val() * 1000; // Обновляем интервал в миллисекундах
+        marketDataInterval = $(this).val() * 1000;
         $('#intervalDisplay').text($(this).val() + ' sec');
       });
       $('#hoursToStore').on('input', function() {
@@ -215,20 +223,21 @@
             if (marketDataIntervalId) clearInterval(marketDataIntervalId);
           
             marketDataIntervalId = setInterval(() => {
-              sendMarketData($('#sl').val(), $('#tp').val());
+              sendMarketData($('#sl').val(), $('#tp').val(), isReverse);
               deleteOldQuotes();
+              const analyzePromise = analyzeAllTickers();
+
               instruments.forEach(instrument => {
                 const stockRow = $(`#stock-${instrument.ticker}`);
-                analyzeAllTickers().then(
-                  analyze => {
-                      stockRow.find('td:eq(3)').text(
-                          `${analyze[instrument.ticker]} %`
-                      );
-                  }
-                )
-              });
+                analyzePromise.then(analyze => {
+                    stockRow.find('td:eq(3)').text(
+                        `${analyze[instrument.ticker] || 50} %`
+                    );
+                });
+            });
             }, marketDataInterval);
           };
+
           const stopSendingMarketData = () => {
             if (marketDataIntervalId) {
                 clearInterval(marketDataIntervalId);
@@ -244,9 +253,9 @@
           });
 
           $('#start').on('click', () => {
-            currentState.html('Загрузка...').css('color', 'darkseagreen');
-            startBot(sendMarketDataWithInterval, stopSendingMarketData);
+            currentState.html('Loading...').css('color', 'darkseagreen');
             loadOrders();
+            startBot(sendMarketDataWithInterval, stopSendingMarketData);
           })
     
 
@@ -322,13 +331,21 @@
           $('#orders-table tbody').on('click', 'tr', function() {
             let ticker = $(this).find('td:nth-child(2)').text();
             $('#orders-table tbody tr').removeClass('highlighted');
+            $('#stock-widget tbody tr').removeClass('highlighted');
+            $(`#stock-${ticker}`).addClass('highlighted'); 
+        
             $('#orders-table tbody tr').each(function() {
                 const currentTicker = $(this).find('td:nth-child(2)').text();
                 if (currentTicker === ticker) {
-                    $(this).toggleClass('highlighted');
+                    $(this).toggleClass('highlighted'); 
                 }
             });
           });
+          $('#toggle').change(function() {
+            isReversed = $(this).prop('checked');
+            console.log('isReversed:', isReversed);
+          });
+        
           setupAutomaticUpdates();
         })
     </script>

@@ -57,19 +57,23 @@ INSTRUMENTS = [
 ]
 
 
-async def create_order(account_id, amount, instrument_id, order_type):
+async def create_order(account_id, amount, instrument_id, order_type, price):
     """Общая функция для создания рыночного ордера на покупку или продажу."""
     if not instrument_id:
         return web.json_response({"error": "Instrument ID is required"})
 
+    response = {}
     if order_type == "buy":
-        response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
+        balance = await get_balance(account_id=account_id)
+        if balance >= amount * price:
+            response = await buy_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
     else:
         response = await sell_order_create(account_id=account_id, instrument_id=instrument_id, quantity=amount)
-    logging.warning(response)
-    money_value = response['executed_order_price']
-
-    return web.json_response(money_value_to_rub(money_value=money_value))
+    if response.get('executed_order_price'):
+        money_value = response['executed_order_price']
+        return web.json_response(money_value_to_rub(money_value=money_value))
+    else:
+        return web.json_response({"error": "Order was not created"})
 
 
 @routes.get("/")
@@ -116,6 +120,7 @@ async def start(request):
 async def marketData(request):
     sl = float(request.query.get('sl', '0.1'))
     tp = float(request.query.get('tp', '0.15'))
+    is_reverse = request.query.get('is_reverse', '').lower() == 'true'
     new_data = await request.json()
 
     forecast_results = await process_forecast(db.market_data, new_data)
@@ -124,7 +129,7 @@ async def marketData(request):
     calculator = BalanceCalculator(motor=db)
     balance = await calculator.get_money()
 
-    strategy = TradingStrategy(db, balance, sl, tp, forecast_results, new_data)
+    strategy = TradingStrategy(db, balance, sl, tp, forecast_results, new_data, is_reverse)
     predicates = await strategy.make_predicate()
 
     executor = TradeExecutor(db=db, calculator=calculator, sl=sl, tp=tp)
