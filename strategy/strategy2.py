@@ -101,7 +101,7 @@ class TradingStrategy:
                 break
         return float(sec_balance)
 
-    def _cal_sl_tp(self, instrument: dict, atr_value: float) -> Tuple[float, float]:
+    def _calculate_sl_tp(self, instrument: dict, atr_value: float) -> Tuple[float, float]:
         sl = self.sl if instrument['instrument_type'] == 'share' else self.sl / 2
         tp = self.tp if instrument['instrument_type'] == 'share' else self.tp / 2
         sl_multiplier = sl / atr_value  # Множитель для уровня SL
@@ -116,7 +116,7 @@ class TradingStrategy:
 
         # волотильность
         atr_value = self.calculate_atr(prices, period=14)
-        sl_multiplier, tp_multiplier = self._cal_sl_tp(instrument, atr_value)
+        sl_multiplier, tp_multiplier = self._calculate_sl_tp(instrument, atr_value)
 
         stop_loss = current_price - sl_multiplier * atr_value
         take_profit = current_price + tp_multiplier * atr_value

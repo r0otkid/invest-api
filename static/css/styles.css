@@ -412,6 +412,7 @@ label {
 #state-bar {
     display: flex;
     justify-content: center;
+    flex-direction: column;
     align-items: center;
     color: #ffffff;
     padding: 5px 7px;
@@ -423,12 +424,21 @@ label {
     transition: all 0.3s ease;
     height: 155px;
     font-size: 10pt;
+    cursor: crosshair;
 }
 
 #state-bar:hover {
     box-shadow: 0 8px 16px rgba(0,0,0,0.2);
     transform: translateY(-1px);
     cursor: text;
+}
+
+#indicators {
+    align-self: flex-start;
+    margin-bottom: auto;
+    margin-right: auto;
+    margin-left: auto;
+    color: #abb2bf;
 }
 
 #current-state {
@@ -439,6 +449,7 @@ label {
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     color: dodgerblue !important;
     column-count: 1;
+    margin-bottom: auto;
 }
 
 #order {

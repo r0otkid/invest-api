@@ -27,7 +27,7 @@ mkl-random
 mkl-service==2.4.0
 motor==3.4.0
 multidict==6.0.4
-numpy==1.22.4
+numpy==1.24.4
 packaging==23.2
 pluggy==1.4.0
 protobuf==4.25.3

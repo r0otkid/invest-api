@@ -135,7 +135,6 @@ const sendMarketData = (sl, tp, isReverse) => {
             data: JSON.stringify(payload),
             contentType: 'application/json',
             success: function (response) {
-                console.log(response.forecast_results)
                 for (const [ticker, forecast] of Object.entries(response.forecast_results)) {
                     const row = $(`#stock-${ticker}`);
                     const forecastCell = row.find('td:eq(3)');
