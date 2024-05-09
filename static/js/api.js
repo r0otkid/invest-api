@@ -238,7 +238,7 @@ const loadOrders = () => {
                 `);
             });
             $('#golbal-profit').html(globalProfit.toFixed(2) + ' RUB')
-            $('#golbal-profit-percent').html((globalProfit / 10000 * 100).toFixed(2) + ' %');
+            $('#golbal-profit-percent').html((globalProfit / 20000 * 100).toFixed(2) + ' %');
         },
         error: function (error) {
             console.log("Error fetching orders:", error);

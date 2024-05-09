@@ -150,7 +150,7 @@ const displayPredicate = (predicates) => {
 const displayGlobalProfit = () => {
     let totalBuyAmount = 0;
     let totalSellAmount = 0;
-    const initialAmount = 10000;
+    const initialAmount = 20000;
 
     $('#orders-table tbody tr').each(function () {
         const operation = $(this).find('td:nth-child(4)').text().trim();

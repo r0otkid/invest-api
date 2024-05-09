@@ -438,7 +438,7 @@ label {
     padding: 3px;
     font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
     color: dodgerblue !important;
-    column-count: 2;
+    column-count: 1;
 }
 
 #order {

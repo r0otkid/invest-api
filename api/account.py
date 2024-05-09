@@ -34,7 +34,7 @@ async def add_money_sandbox(account_id: str, money: int, currency="rub"):
         )
 
 
-async def get_account_positions(account_id: str, money_only=True) -> list:
+async def get_account_positions(account_id: str, money_only=True):
     try:
         if IS_PROD:
             async with AsyncClient(TOKEN, target=TARGET) as cli:
@@ -46,7 +46,7 @@ async def get_account_positions(account_id: str, money_only=True) -> list:
                 return result.money if money_only else result
     except Exception as e:
         logging.error(e)
-        return []
+        return {'securities': []}
 
 
 async def get_info() -> dict:
