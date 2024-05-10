@@ -67,7 +67,7 @@ const createNewTableRow = (instrument, closePrice, ticker) => {
             <td></td>
             <td>${ticker}</td>
             <td style="text-align: center;"><b>&nbsp;&nbsp;${parseFloat(closePrice.toFixed(8)).toString()}</b></td>
-            <td>0</td>
+            <td>0.00</td>
         </tr>`
     );
 }
@@ -95,11 +95,12 @@ const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
     }
     addQuote(instrument.ticker, closePrice);
     const lastColumn = stockRow.find('td:eq(6)');
-    if (stockRow.find('td:eq(2)').text().trim()) {
+    const securitiesCount = stockRow.find('td:eq(2)').text().trim();
+    if (securitiesCount) {
         const dev = calculateDeviation(instrument.ticker);
-        lastColumn.html(dev);
+        lastColumn.html(parseFloat(parseFloat(securitiesCount) * parseFloat(dev)).toFixed(2));
     } else {
-        lastColumn.html(0);
+        lastColumn.html('0.00');
     }
 };
 

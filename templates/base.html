@@ -50,10 +50,20 @@
         <div class="tab-content"></div>
       </div>
       <div class="orders">
-        <label for="sl">Stop Loss</label>
-        <input type="number" id="sl" value="0.23" placeholder="%" />
-        <label for="tp">Take Profit</label>
-        <input type="number" id="tp" value="0.17" placeholder="%" />
+        <div id="main-settings">
+          <div id="sl-tp">
+            <label for="sl">Stop Loss</label>
+            <input type="number" id="sl" value="0.23" placeholder="%" />
+            <label for="tp">Take Profit</label>
+            <input type="number" id="tp" value="0.17" placeholder="%" />
+          </div>
+          <div id="server-rsi">
+            <label for="sl">Server RSI period</label>
+            <input type="number" id="server-rsi-period" value="20" placeholder="" />
+            <label for="tp">Server RSI frame size</label>
+            <input type="number" id="server-rsi-frame" value="1000" placeholder="" />
+          </div>
+        </div>
         <div id="accordion">
           <i class="fas fa-chevron-down"></i>
         </div>

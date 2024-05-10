@@ -4,7 +4,16 @@ import numpy as np
 
 class TradingStrategy:
     def __init__(
-        self, db, balance: float, sl: float, tp: float, forecast: dict, market_data: dict, is_reverse: bool = False
+        self,
+        db,
+        balance: float,
+        sl: float,
+        tp: float,
+        forecast: dict,
+        market_data: dict,
+        is_reverse: bool = False,
+        period: int = 20,
+        frame: int = 1000,
     ) -> None:
         self.db = db
         self.balance = balance
@@ -13,6 +22,8 @@ class TradingStrategy:
         self.sl = sl
         self.tp = tp
         self.is_reverse = is_reverse
+        self.period = period
+        self.frame = frame
         self.forecast = forecast
         self.market_data = market_data['marketData']
 
@@ -77,7 +88,7 @@ class TradingStrategy:
         return atr[-1]
 
     async def _get_trends(self) -> Dict[str, List[float]]:
-        cursor = self.db.market_data.find().sort('_id', -1).limit(1000)
+        cursor = self.db.market_data.find().sort('_id', -1).limit(self.frame)
         history_records = await cursor.to_list(length=None)
 
         if not history_records:
@@ -124,9 +135,9 @@ class TradingStrategy:
         forecast_prob = self.forecast.get(ticker, 0)
 
         # скользящие средние
-        sma = self.calculate_sma(prices, period=20)  # период по 20 штук на 1000 цен
-        ema = self.calculate_ema(prices, period=20)
-        rsi = self.calculate_rsi(prices, period=20)
+        sma = self.calculate_sma(prices, period=self.period)  # период по 20 штук на 1000 цен
+        ema = self.calculate_ema(prices, period=self.period)
+        rsi = self.calculate_rsi(prices, period=self.period)
 
         sec_balance = await self._get_security_balance(instrument)
 

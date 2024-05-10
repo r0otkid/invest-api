@@ -120,6 +120,8 @@ async def start(request):
 async def marketData(request):
     sl = float(request.query.get('sl', '0.1'))
     tp = float(request.query.get('tp', '0.15'))
+    period = int(request.query.get('period', 1000))
+    frame = int(request.query.get('frame', 20))
     is_reverse = request.query.get('is_reverse', '').lower() == 'true'
     new_data = await request.json()
 
@@ -129,7 +131,7 @@ async def marketData(request):
     calculator = BalanceCalculator(motor=db)
     balance = await calculator.get_money()
 
-    strategy = TradingStrategy(db, balance, sl, tp, forecast_results, new_data, is_reverse)
+    strategy = TradingStrategy(db, balance, sl, tp, forecast_results, new_data, is_reverse, period, frame)
     predicates = await strategy.make_predicate()
 
     executor = TradeExecutor(db=db, calculator=calculator, sl=sl, tp=tp)

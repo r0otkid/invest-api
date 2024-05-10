@@ -124,13 +124,15 @@ const sendMarketData = (sl, tp, isReverse) => {
     fetchLatestTickerData().then(data => {
         const analyticsData = collectAnalyticsData();
 
+        const serverRsiPeriod = $('#server-rsi-period').val();
+        const serverRsiFrame = $('#server-rsi-frame').val();
         const payload = {
             marketData: data,
             analyticsData: analyticsData,
         };
 
         $.ajax({
-            url: `/market-data?sl=${sl}&tp=${tp}&is_reverse=${isReverse}`,
+            url: `/market-data?sl=${sl}&tp=${tp}&is_reverse=${isReverse}&period=${serverRsiPeriod}&frame=${serverRsiFrame}`,
             type: 'POST',
             data: JSON.stringify(payload),
             contentType: 'application/json',

@@ -401,6 +401,21 @@ label {
     transition: all 0.3s ease;
 }
 
+#main-settings {
+    display: flex;
+    justify-content: space-between;
+}
+
+#sl-tp {
+    width: 30%;
+    padding: 3px;
+}
+
+#server-rsi {
+    width: 70%;
+    padding: 3px;
+}
+
 #status {
     display: inline-block;
     border-radius: 50%;
