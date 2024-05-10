@@ -14,7 +14,7 @@ const getIconAndColor = (stockRow, closePrice) => {
     return { icon: icon, color: color };
 }
 
-function calculateAveragePrices(orders) {
+const calculateAveragePrices = (orders) => {
     let buyOrders = orders.filter(order => order.order_type === "buy");
     let averagePrices = {};
 
@@ -33,6 +33,7 @@ function calculateAveragePrices(orders) {
 
     return averagePrices;
 }
+
 const calculateDeviation = (ticker) => {
     const orders = $(`#orders-table tbody tr`).filter(
         (index, row) => $(row).find('td:eq(1)').text().trim() === ticker.trim() && $(row).find('td:eq(3)').text() === 'buy'
@@ -40,21 +41,19 @@ const calculateDeviation = (ticker) => {
     if (orders.length === 0) {
         return;
     }
-    let totalQuantity = 0;
-    let totalAmount = 0;
-    orders.each((index, row) => {
-        totalQuantity += parseFloat($(row).find('td:eq(4)').text());
-        totalAmount += parseFloat($(row).find('td:eq(5)').text().replace(/[^\d.]/g, ''));
-    });
-    if (totalQuantity === 0) {
+
+    const lastOrder = orders[orders.length - 1];
+    const lastPrice = parseFloat($(lastOrder).find('td:eq(5)').text().replace(/[^\d.]/g, ''));
+    if (isNaN(lastPrice)) {
         return;
     }
-    const averagePrice = totalAmount / totalQuantity;
+
     const currentPrice = parseFloat($(`#stock-${ticker} td:eq(5)`).text().replace(/[^\d.]/g, '').trim());
     if (isNaN(currentPrice)) {
         return;
     }
-    const deviation = Math.abs(currentPrice) - Math.abs(averagePrice);
+
+    const deviation = Math.abs(currentPrice) - Math.abs(lastPrice);
     return deviation.toFixed(1)
 };
 

@@ -69,17 +69,15 @@ class TradingStrategy:
 
     @staticmethod
     def calculate_atr(prices, period=14):
-        high = prices['high']
-        low = prices['low']
-        close = prices['close']
+        tr = np.zeros_like(prices)
+        atr = np.zeros_like(prices)
 
-        tr1 = np.abs(high - low)
-        tr2 = np.abs(high - close.shift())
-        tr3 = np.abs(low - close.shift())
+        for i in range(1, len(prices)):
+            tr1 = np.abs(prices[i] - prices[i - 1])
+            tr2 = np.abs(prices[i] - prices[i - 1])
+            tr3 = np.abs(prices[i] - prices[i - 1])
+            tr[i] = np.max([tr1, tr2, tr3])
 
-        tr = np.maximum.reduce([tr1, tr2, tr3])
-
-        atr = np.zeros_like(tr)
         atr[period - 1] = np.mean(tr[:period])
 
         for i in range(period, len(atr)):
