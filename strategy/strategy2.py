@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, List, Tuple
 import numpy as np
 
@@ -124,7 +125,10 @@ class TradingStrategy:
         prices = trends.get(ticker, [])
 
         # волотильность
-        atr_value = self.calculate_atr(prices, period=14)
+        try:
+            atr_value = self.calculate_atr(prices, period=14)
+        except IndexError:
+            atr_value = 1
         sl_multiplier, tp_multiplier = self._calculate_sl_tp(instrument, atr_value)
 
         stop_loss = current_price - sl_multiplier * atr_value
@@ -145,8 +149,8 @@ class TradingStrategy:
             messages.append(f"{self.sell} {ticker} TP: {take_profit:.2f}")  # - Take Profit
         else:
             if sma is not None and ema is not None:
-                if (current_price > ema and current_price > sma and forecast_prob >= 0.45) and (
-                    rsi is not None and rsi < 30
+                if (current_price > ema and current_price > sma and forecast_prob >= 0.4) and (
+                    rsi is not None and rsi < 35
                 ):
                     action = self.buy if not self.is_reverse else self.sell
                     messages.append(f"{action} {ticker}")

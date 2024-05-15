@@ -14,24 +14,17 @@ const getIconAndColor = (stockRow, closePrice) => {
     return { icon: icon, color: color };
 }
 
-const calculateAveragePrices = (orders) => {
-    let buyOrders = orders.filter(order => order.order_type === "buy");
-    let averagePrices = {};
+const calculateLastPrices = (orders) => {
+    let lastPrices = {};
 
-    buyOrders.forEach(order => {
-        let instrument_uid = order.instrument_uid;
-        if (!averagePrices[instrument_uid]) {
-            averagePrices[instrument_uid] = { sum: 0, count: 0 };
+    orders.forEach(order => {
+        if (order.order_type === "buy") {
+            let instrument_uid = order.instrument_uid;
+            lastPrices[instrument_uid] = order.price;
         }
-        averagePrices[instrument_uid].sum += order.price;
-        averagePrices[instrument_uid].count++;
     });
 
-    for (let instrument_uid in averagePrices) {
-        averagePrices[instrument_uid] = averagePrices[instrument_uid].sum / averagePrices[instrument_uid].count;
-    }
-
-    return averagePrices;
+    return lastPrices;
 }
 
 const calculateDeviation = (ticker) => {
@@ -43,7 +36,7 @@ const calculateDeviation = (ticker) => {
     }
 
     const lastOrder = orders[orders.length - 1];
-    const lastPrice = parseFloat($(lastOrder).find('td:eq(5)').text().replace(/[^\d.]/g, ''));
+    const lastPrice = parseFloat($(lastOrder).find('td:eq(2)').text().replace(/[^\d.]/g, ''));
     if (isNaN(lastPrice)) {
         return;
     }
@@ -97,7 +90,15 @@ const updateOrAppendStockElement = (instrument, ticker, closePrice) => {
     const securitiesCount = stockRow.find('td:eq(2)').text().trim();
     if (securitiesCount) {
         const dev = calculateDeviation(instrument.ticker);
-        lastColumn.html(parseFloat(parseFloat(securitiesCount) * parseFloat(dev)).toFixed(2));
+
+        lastColumn.html(parseFloat(parseFloat(securitiesCount) * dev).toFixed(2));
+        if (dev > 0) {
+            lastColumn.css('color', 'seagreen');
+        } else if (dev < 0) {
+            lastColumn.css('color', 'orangered');
+        } else {
+            lastColumn.css('color', '#abb2bf');
+        }
     } else {
         lastColumn.html('0.00');
     }

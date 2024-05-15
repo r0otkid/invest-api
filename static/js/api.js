@@ -210,7 +210,7 @@ const loadOrders = () => {
         url: "/buy-sell-orders",
         type: "GET",
         success: function (orders) {
-            const averagePrices = calculateAveragePrices(orders);
+            const lastPrices = calculateLastPrices(orders);
 
             $('#orders-table tbody').empty();
             let globalProfit = 0;
@@ -218,7 +218,7 @@ const loadOrders = () => {
                 const quantity = order.lots * order.instrument?.lot;
                 let profit = 0;
                 if (order.order_type === 'sell') {
-                    let avgPrice = averagePrices[order.instrument_uid] || 0;
+                    let avgPrice = lastPrices[order.instrument_uid] || 0;
                     profit = (order.price - avgPrice) * quantity;
                     profit = profit.toFixed(2);
                     globalProfit += order.price * quantity;
